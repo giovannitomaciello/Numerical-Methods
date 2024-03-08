@@ -4,10 +4,10 @@ close all
 
 int = INT;
 
-m = [1 .2 .1];
+m = [1 .2 .1 .05];
 NP = length(m);
-k = [100 100 100];
-l = [1 1 1];
+k = [100 100 100 100];
+l = [1 1 1 1];
 ND = 3;
 g = [0 -9.81 0];
 
@@ -23,14 +23,14 @@ dTdq = @(q) [dTdqi(q,1) dTdqi(q,2) dTdqi(q,3)];
 
 
 %init
-q0 = [1 0 0; 2 0 0; 3 0 0];
-p0 = [0 0 0;0 0 0; 0 0 0];
+q0 = [1 0 0; 2 0 0; 3 0 0; 4 0 0];
+p0 = [0 0 0;0 0 0; 0 0 0; 0 0 0];
 t = 0:0.005:10;
 
 %[q p] = int.velVerlet(q0,p0,dTdq,dKdp,t);
 %[q p] = int.euleroindietro(q0,p0,dTdq,dKdp,t);
 %[q p] = int.euleroavanti(q0,p0,dTdq,dKdp,t);
-%[q p] = int.crankNick(q0,p0,dTdq,dKdp,t);
+[q p] = int.crankNick(q0,p0,dTdq,dKdp,t);
 
 for i = 1:length(t)
     Tpl(i) = T(q(:,:,i));
