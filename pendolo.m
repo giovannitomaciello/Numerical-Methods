@@ -4,10 +4,10 @@ close all
 
 int = INT;
 
-m = [1 .2 .1 .05];
+m = [1 .2 .1 .05 0.025 0.0125];
 NP = length(m);
-k = [100 100 100 100];
-l = [1 1 1 1];
+k = [100 100 100 100 100 100];
+l = [1 1 1 1 0.5 0.5];
 ND = 3;
 g = [0 -9.81 0];
 
@@ -23,14 +23,14 @@ dTdq = @(q) [dTdqi(q,1) dTdqi(q,2) dTdqi(q,3)];
 
 
 %init
-q0 = [1 0 0; 2 0 0; 3 0 0; 4 0 0];
-p0 = [0 0 0;0 0 0; 0 0 0; 0 0 0];
-t = 0:0.005:10;
+q0 = [1 0 0; 2 0 0; 3 0 0; 4 0 0; 4.5 0 0; 5 0 0];
+p0 = [0 0 0;0 0 0; 0 0 0; 0 0 0; 0 0 0; 0 0 0];
+t = 0:0.001:10;
 
-%[q p] = int.velVerlet(q0,p0,dTdq,dKdp,t);
+[q p] = int.velVerlet(q0,p0,dTdq,dKdp,t);
 %[q p] = int.euleroindietro(q0,p0,dTdq,dKdp,t);
 %[q p] = int.euleroavanti(q0,p0,dTdq,dKdp,t);
-[q p] = int.crankNick(q0,p0,dTdq,dKdp,t);
+%[q p] = int.crankNick(q0,p0,dTdq,dKdp,t);
 
 for i = 1:length(t)
     Tpl(i) = T(q(:,:,i));
@@ -39,27 +39,26 @@ for i = 1:length(t)
 end
 
 %%
-for i = 1:length(t)
-    % plot
-    
-    plot([0;q(:,1,i)],[0;q(:,2,i)],'r-o','MarkerSize',10,'MarkerFaceColor','r')
-
-    %plot([0 q(1,:,i)],[0 q(2,:,i)],'r-');
-    % plot([qx(1,i) qx(2,i)],[qy(1,i) qy(2,i)],'g-');
-    % plot(qx(2,i),qy(2,i),'go','MarkerSize',5,'MarkerFaceColor','g')
-    % plot([qx(2,i) qx(3,i)],[qy(2,i) qy(3,i)],'b-');
-    % plot(qx(3,i),qy(3,i),'go','MarkerSize',5,'MarkerFaceColor','b')
-    % text(0,5,"Timer: "+num2str(t(i),2))
-
-    xlim([-5 5])
-    ylim([-5 5])
-    drawnow
-    hold off
-end
-%%
 
 figure
 hold on
-plot(t,Energy)
-plot(t,Kpl)
-plot(t,Tpl)
+plot(t,Energy,"LineWidth",1.4)
+plot(t,Kpl,"LineWidth",1.4)
+plot(t,Tpl,"LineWidth",1.4)
+legend(["Total Energy","Kin Energy", "Pot Energy"])
+xlabel("Time [s]","FontSize",11,"FontWeight","bold")
+ylabel("Energy [J]","FontSize",11,"FontWeight","bold")
+ylim([-22 31])
+
+%%
+figure
+for i = 1:length(t)
+    % plot
+    plot([0;q(:,1,i)],[0;q(:,2,i)],'r-o','MarkerSize',10,'MarkerFaceColor','r')
+    xlim([-5.5 5.5])
+    ylim([-5.5 5.5])
+    % annotate time
+    text(0.85,0.95,sprintf("t = %.2f s",t(i)),'Units','normalized')
+    drawnow
+    hold off
+end

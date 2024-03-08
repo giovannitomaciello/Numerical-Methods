@@ -29,10 +29,9 @@ dKdp = @(p) p./m';
 F = @(q) LennardJonesForce(q, sigmaij, epsij);
 
 %% init
-t = 0:10e-15:0.2e-9;
+t = 0:40e-15:0.2e-9;
 
 [q, p] = int.velVerlet(q0,p,F,dKdp,t);
-%[q, p] = int.crankNick(q0,p,F,dKdp,t);
 %[q, p] = int.euleroindietro(q0,p,F,dKdp,t);
 %[q, p] = int.euleroavanti(q0,p,F,dKdp,t);
 
@@ -43,21 +42,34 @@ end
 
 %%
 figure
-plot(t,T-T0)
+plot(t/1e-9,T-T0,"LineWidth",1.4)
+ylim([-30 30])
+xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
+ylabel("T [K]","FontSize",11,"FontWeight","bold")
 
 %%
 figure
-plot(t,E-Energy0)
+plot(t/1e-9,(E-Energy0)/kb,"LineWidth",1.4)
+ylim([-30 30])
+xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
+ylabel("(E - E_0)/k_b [K]","FontSize",11,"FontWeight","bold")
 
 %%
+figure
+axis square
+
+xlabel("x [m]","FontSize",11,"FontWeight","bold")
+ylabel("y [m]","FontSize",11,"FontWeight","bold")
+
 for i = 1:length(t)
     % plot
-    hold on
     scatter(q(:,1,i),q(:,2,i))
-
+    % annotate time
+    text(0.85,0.95,sprintf("t = %.4f ns",t(i)/1e-9),'Units','normalized')
+    xlim([min(q(:,1,:),[],'all') max(q(:,1,:),[],'all')])
+    ylim([min(q(:,2,:),[],'all') max(q(:,2,:),[],'all')])
     drawnow
-    pause(.1)
-    clf    
+    pause(.01) 
 end
 
 function F = LennardJonesForce(q, sigmaij, epsij)
@@ -68,17 +80,17 @@ function F = LennardJonesForce(q, sigmaij, epsij)
     dx = q(:,1) - q(:,1)';
     dy = q(:,2) - q(:,2)';
     dz = q(:,3) - q(:,3)';
-    r = sqrt(dx.^2 + dy.^2 + dz.^2) + eye(n);
+    r2 = dx.^2 + dy.^2 + dz.^2 + eye(n);
 
-    % calculate sigma6 - 12
-    sigma6 = (sigmaij./r).^6;
-    sigma12 = sigma6.^2;
+    % calculate sigma2 - 6
+    sigma2 = (sigmaij^2)./r2;
+    sigma6 = sigma2.^3;
 
     % calculate force
-    Fmat = 4*epsij*(12*sigma12 - 6*sigma6)./r;
-    Fx = Fmat.*dx./r;
-    Fy = Fmat.*dy./r;
-    Fz = Fmat.*dz./r;
+    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2;
+    Fx = -Fmat.*dx;
+    Fy = -Fmat.*dy;
+    Fz = -Fmat.*dz;
 
     % set diagonal to 0
     Fx(1:n+1:end) = 0;
@@ -93,7 +105,6 @@ end
 
 function E = Energy(q, p, m, sigmaij, epsij)
     n = length(q);
-    E = 0;
 
     % calculate kinetic energy
     K = sum(m'.*( sum( (p./m').^2 ,2) )) /2;
@@ -102,17 +113,17 @@ function E = Energy(q, p, m, sigmaij, epsij)
     dx = q(:,1) - q(:,1)';
     dy = q(:,2) - q(:,2)';
     dz = q(:,3) - q(:,3)';
-    r = sqrt(dx.^2 + dy.^2 + dz.^2)  + eye(n);
+    r2 = dx.^2 + dy.^2 + dz.^2  + eye(n);
 
-    % calculate sigma6 - 12
-    sigma6 = (sigmaij./r).^6;
-    sigma12 = sigma6.^2;
+    % calculate sigma2 - 6
+    sigma2 = (sigmaij^2)./r2;
+    sigma6 = sigma2.^3;
 
     %set diagonal to 0
     sigma6(1:n+1:end) = 0;
 
     % calculate potential energy
-    U = 4*epsij*(sigma12 - sigma6);
+    U = 4*epsij*sigma6.*(sigma6 - 1);
 
     % sum potential energy
     E = sum(sum(U))/2 + K;
