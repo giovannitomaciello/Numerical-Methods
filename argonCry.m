@@ -22,27 +22,31 @@ sigmaij = 0.341*1e-9; % m
 
 %% init E
 Energy0 = -1260.2*kb;
+T0 = 22.72;
 
 %% Forces
 dKdp = @(p) p./m';
 F = @(q) LennardJonesForce(q, sigmaij, epsij);
 
 %% init
-t = 0:10e-14:1e-11;
+t = 0:10e-15:1e-9;
 
-%[q, p] = int.velVerlet(q0,p,F,dKdp,t);
-[q, p] = int.crankNick(q0,p,F,dKdp,t);
+[q, p] = int.velVerlet(q0,p,F,dKdp,t);
+% [q, p] = int.crankNick(q0,p,F,dKdp,t);
 %[q, p] = int.euleroindietro(q0,p,F,dKdp,t);
+%[q, p] = int.euleroavanti(q0,p,F,dKdp,t);
 
 for i = 1:length(t)
-    T(i) = sum(m'.*( (sum(p(:,:,i)./m',2)).^2 )) /7/2/kb;
+    T(i) = sum(m'.*( sum( (p(:,:,i)./m').^2 ,2) )) /7/2/kb;
     E(i) = Energy(q(:,:,i), p(:,:,i), m, sigmaij, epsij);
 end
+
 %%
 figure
-plot(t,T-T(1))
+plot(t,T-T0)
+%%
 figure
-plot(t,E-E(1))
+plot(t,E-Energy0)
 
 %%
 for i = 1:length(t)
@@ -55,55 +59,58 @@ for i = 1:length(t)
     clf    
 end
 
-function F = LennardJonesForce(positions, sigma, epsilon)
+function F = LennardJonesForce(q, sigmaij, epsij)
+    n = length(q);
+    F = zeros(n,3);
 
-  % Calculate pairwise distances
-  dx = bsxfun(@minus, positions(:, 1), permute(positions(:, 1), [2 1]));
-  dy = bsxfun(@minus, positions(:, 2), permute(positions(:, 2), [2 1]));
-  dz = bsxfun(@minus, positions(:, 3), permute(positions(:, 3), [2 1]));
+    % calculate distance
+    dx = q(:,1) - q(:,1)';
+    dy = q(:,2) - q(:,2)';
+    dz = q(:,3) - q(:,3)';
+    r = sqrt(dx.^2 + dy.^2 + dz.^2);
 
-  dx(isnan(dx)) = 0;
-  dy(isnan(dy)) = 0;
-  dy(isnan(dz)) = 0;
+    % calculate sigma6
+    sigma6 = (sigmaij./r).^6;
 
-  r = sqrt(dx.^2 + dy.^2 + dz.^2);
-  for i = 1:size(r,1)
-      r(i,i) = 1e100;
-  end
+    % calculate force
+    Fx = 4*epsij*(12*sigma6.^2 - 6*sigma6).*dx./r;
+    Fy = 4*epsij*(12*sigma6.^2 - 6*sigma6).*dy./r;
+    Fz = 4*epsij*(12*sigma6.^2 - 6*sigma6).*dz./r;
 
-  sigmar6 = (sigma./r).^6;
-  Fonr = 48*epsilon*(sigmar6).*(sigmar6 - 0.5);
-  Fmat = Fonr.*r;
+    % set diagonal to 0
+    Fx(1:n+1:end) = 0;
+    Fy(1:n+1:end) = 0;
+    Fz(1:n+1:end) = 0;
 
-  % Assign forces in x and y directions
-  F(:, 1) = sum(Fmat .* dx ./ r);
-  F(:, 2) = sum(Fmat .* dy ./ r);
-  F(:, 3) = sum(Fmat .* dz ./ r);
+    % sum forces
+    F(:,1) = sum(Fx,2);
+    F(:,2) = sum(Fy,2);
+    F(:,3) = sum(Fz,2);
 end
 
-function out = Energy(positions, moments, m, sigma, epsilon)
+function E = Energy(q, p, m, sigmaij, epsij)
+    n = length(q);
+    E = 0;
 
-  % Calculate pairwise distances
-  dx = bsxfun(@minus, positions(:, 1), permute(positions(:, 1), [2 1]));
-  dy = bsxfun(@minus, positions(:, 2), permute(positions(:, 2), [2 1]));
-  dz = bsxfun(@minus, positions(:, 3), permute(positions(:, 3), [2 1]));
-  dx(isnan(dx)) = 0;
-  dy(isnan(dy)) = 0;
-  dz(isnan(dy)) = 0;
+    % calculate kinetic energy
+    K = sum(m'.*( sum( (p./m').^2 ,2) )) /2;
 
-  r = sqrt(dx.^2 + dy.^2 + dz.^2);
-  for i = 1:size(r,1)
-      r(i,i) = 1e100;
-  end
+    % calculate distance
+    dx = q(:,1) - q(:,1)';
+    dy = q(:,2) - q(:,2)';
+    dz = q(:,3) - q(:,3)';
+    r = sqrt(dx.^2 + dy.^2 + dz.^2);
 
-  sigmar6 = (sigma./r).^6;
-  U = 4*epsilon*(sigmar6.^2 -sigmar6);
-  Epot = sum(triu(U).*r,"all");
+    % calculate sigma6
+    sigma6 = (sigmaij./r).^6;
+    %set diagonal to 0
+    sigma6(1:n+1:end) = 0;
 
-  Ekin = 1/2*sum(( sum(moments.^2, 2) )./m');
+    % calculate potential energy
+    U = 4*epsij*(sigma6.^2 - sigma6);
 
-  out = Ekin + Epot;
-
+    % sum potential energy
+    E = sum(sum(U))/2 + K;
 end
 
 
