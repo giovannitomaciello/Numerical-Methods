@@ -1,21 +1,21 @@
-function [q,p]=velVerlet(q0,p0,dTdq,dKdp,t)
+function [q,p] = velVerlet(q0,p0,dTdq,dKdp,t)
 
 [NP, ND] = size(q0);
 
-NT=numel(t);
+NT = numel(t);
 
-q=zeros(NP,ND,NT);
-p=zeros(NP,ND,NT);
+q = zeros(NP,ND,NT);
+p = zeros(NP,ND,NT);
 
-q(:,:,1)=q0;
-p(:,:,1)=p0;
+q(:,:,1) = q0;
+p(:,:,1) = p0;
 
 %Force tmp
  
 %Ftmp ha dimensioni [NP,ND] e Ftmp(i,j) rappresenta la componente j sulla particella i  
 Ftmp = - dTdq(q0);
 
-for i=2:NT
+for i = 2:NT
     % time step
     dt = t(i) - t(i-1);
 

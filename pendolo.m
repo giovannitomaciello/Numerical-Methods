@@ -2,33 +2,39 @@ clear
 clc
 close all
 
-m=[1 .2];
-NP=length(m);
-k=[100 100];
-l=[1 1];
-ND=3;
-g=[0 -9.81 0];
+int = INT;
+
+m = [1 .2];
+NP = length(m);
+k = [100 100];
+l = [1 1];
+ND = 3;
+g = [0 -9.81 0];
 
 
-K=@(p)  sum(vecnorm(p').^2/2./m);
-T=@(q) -m*q*g' + k/2*((vecnorm(diff([zeros(1,ND);q])')-l).^2)';
+K = @(p)  sum(vecnorm(p').^2/2./m);
+T = @(q) -m*q*g' + k/2*((vecnorm(diff([zeros(1,ND);q])')-l).^2)';
 
 dKdp = @(p) p./m';
-v=ones(1,NP);
-matrice=diag(v)+diag(v(2:end),1);
-dTdqi=@(q,i) -m'*g(i)+ matrice*(k.*(-diff([0;q(:,i)]))'.*(l./vecnorm(diff([0 0 0;q])')-1))';
-dTdq=@(q) [dTdqi(q,1) dTdqi(q,2) dTdqi(q,3)];
-
+v = ones(1,NP);
+matrice = diag(v)+diag(v(2:end),1);
+dTdqi = @(q,i) -m'*g(i)+ matrice*(k.*(-diff([0;q(:,i)]))'.*(l./vecnorm(diff([0 0 0;q])')-1))';
+dTdq = @(q) [dTdqi(q,1) dTdqi(q,2) dTdqi(q,3)];
 
 %init
 q0 = [1 0 0; 2 0 0];
 p0 = [0 0 0;0 0 0];
 t = 0:0.005:10;
 
-[q p]=velVerlet(q0,p0,dTdq,dKdp,t);
+%[q p] = int.velVerlet(q0,p0,dTdq,dKdp,t);
+%[q p] = int.euleroindietro(q0,p0,dTdq,dKdp,t);
+%[q p] = int.euleroavanti(q0,p0,dTdq,dKdp,t);
+[q p] = int.crankNick(q0,p0,dTdq,dKdp,t);
 
-for i=1:length(t)
- Energy(i) = T(q(:,:,i)) + K(p(:,:,i));
+for i = 1:length(t)
+    Tpl(i) = T(q(:,:,i));
+    Kpl(i) = K(p(:,:,i));
+    Energy(i) = T(q(:,:,i)) + K(p(:,:,i));
 end
 
 %%
@@ -50,4 +56,9 @@ for i = 1:length(t)
     hold off
 end
 %%
+
+figure
+hold on
 plot(t,Energy)
+plot(t,Kpl)
+plot(t,Tpl)
