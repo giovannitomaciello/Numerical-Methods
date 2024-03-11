@@ -13,7 +13,7 @@ m = 66.34e-27*ones(1,length(qy0))'; % Kg
 px0 = [-30 50 -70 90 80 -40 -80].*m'; % nm/ns
 py0 = [-20 -90 -60 40 90 100 -60].*m'; % nm/ns
 pz0 = zeros(1,length(qx0)); % nm/ns
-p = [px0', py0', pz0']; % nm/ns
+p0 = [px0', py0', pz0']; % nm/ns
 
 %% constants
 kb = 1.380658e-23;
