@@ -27,10 +27,13 @@ q0 = [1 0 0; 2 0 0; 3 0 0; 4 0 0; 4.5 0 0; 5 0 0];
 p0 = [0 0 0;0 0 0; 0 0 0; 0 0 0; 0 0 0; 0 0 0];
 t = 0:0.001:10;
 
-[q p] = int.velVerlet(q0,p0,dTdq,dKdp,t);
+%!!! CHOOSE A METHOD !!!%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%[q p] = int.velVerlet(q0,p0,dTdq,dKdp,t);
 %[q p] = int.euleroindietro(q0,p0,dTdq,dKdp,t);
 %[q p] = int.euleroavanti(q0,p0,dTdq,dKdp,t);
 %[q p] = int.crankNick(q0,p0,dTdq,dKdp,t);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 1:length(t)
     Tpl(i) = T(q(:,:,i));

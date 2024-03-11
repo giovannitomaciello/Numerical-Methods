@@ -10,20 +10,20 @@ p = zeros(NP,ND,NT);
 q(:,:,1) = q0;
 p(:,:,1) = p0;
 
+unk = [q0(:); p0(:)];
+dt = diff(t);
+
 for i=2:NT
-    % time step
-    dt = t(i) - t(i-1);
     % init val
     q0 = q(:,:,i-1);  
     p0 = p(:,:,i-1);
     
-    opt = optimoptions("fsolve","Display","none");
-    unk = fsolve(@(unk) sysEB(unk, q0, p0, dt, dKdp, dTdq),....
-        [q0(:); p0(:)], opt);
+    opt = optimoptions("fsolve","Display","none","Algorithm","levenberg-marquardt");
+    unk = fsolve(@(unk) sysEB(unk, q0, p0, dt(i-1), dKdp, dTdq),...
+        unk, opt);
 
     q(:,:,i) = reshape(unk(1:NP*ND,:),[],3);
     p(:,:,i) = reshape(unk(NP*ND+1:end,:),[],3);
-
 end
 end
 
