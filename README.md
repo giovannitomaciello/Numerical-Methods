@@ -1,47 +1,64 @@
-# Numerical-Methods
+# Numerical Methods for Molecular Simulation <div align="right"> ![MATLAB](https://img.shields.io/badge/MATLAB-e86e05?style=for-the-badge&logo=Octave&logoColor=white) ![POLIMI](https://img.shields.io/badge/POLIMI-050065?style=for-the-badge)</div> 
+<h4 align="right">Andrea Somma, Giovanni Tomaciello, Paolo Zagardo</h4> 
 
-<div align="center">
-
-![MATLAB](https://img.shields.io/badge/MATLAB-e86e05?style=for-the-badge&logo=Octave&logoColor=white)
-![POLIMI](https://img.shields.io/badge/POLIMI-050065?style=for-the-badge)
+## Group Assignment 1 
+<div>
+    <h3>Mathematical simulators of a double elastic pendulum and a frozen Argon crystal in MATLAB</h3> <h5 align="right">March 2024</h5>
 </div>
 
-<!-- PROJECT LOGO -->
-<br />
-<div align="center">  
-   Trova una immagine 
-      <br />
-    <h1 align="center">Group Assignment 1</h1>
-    <h3 align="center">Mathematical simulators of a double elastic pendulum and an Argon crystal in MATLAB</h3>
-    <h4>Team: Andrea Somma, Giovanni Tomaciello, Paolo Zagardo</h4>
-</div>
 
-## Implemented numerical methods:
-- Crank–Nicolson method [Matlab code](./@INT/crankNick.m)
-  - Piccola descrizione vantaggi e svantaggi 
-- Velocity Verlet method [Matlab code](./@INT/velVerlet.m)
-  - Piccola descrizione vantaggi e svantaggi 
-- Forward Euler method [Matlab code](./@INT/euleroavanti.m)
-  - Piccola descrizione vantaggi e svantaggi 
-- Backward Euler method [Matlab code](./@INT/euleroindietro.m)
-  - Piccola descrizione vantaggi e svantaggi 
+### Implemented numerical methods:
+-  [Forward Euler method](./@INT/euleroavanti.m)
+    - Explicit
+    - 1st order
+    - Instable solution - Amplification
+    - Not reversible
+-  [Backward Euler method](./@INT/euleroindietro.m)
+    - Implicit
+    - 1st order 
+    - Instable solution - Dumping
+    - Not reversible
+-  [Crank–Nicolson method](./@INT/crankNick.m)
+    - Implicit
+    - 2nd order in both _x_ and _t_, permitting long timesteps
+    - Stable solution, but out of phase
+    - Reversible
+-  [Velocity Verlet method](./@INT/velVerlet.m)
+    - Explicit
+    - 2nd order in _t_, permitting long timesteps
+    - Stable solution
+    - Reversible
+    - Symplectic
 
-## Double elastic pendulum 
-[Matlab code](./pendolo.m)
+### Double elastic pendulum, [Matlab code](./pendolo.m)
 <div align ="center">
-
-  ![image](https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/961cf984-801a-4cd4-93c3-0330fdb019f9)
-</div>
   
+  <img src="https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/8d5d75d5-94d7-4aba-9df0-2483e19cfc79" width="700" height="400">
+</div>
+
 - two or more masses;
-- gravity effect;
+- forces: gravity, elastic force;
 - no friction contribution;
 - relies on the above numerical methods.
 
-### Results
-Grafici e immagini
+#### Graphs (velocity Verlet method)
+- Energy conservation
+<div align ="center">
+  
+<img src="https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/aec5d3d8-2fb7-435f-a9c3-d831f43b617a" width="500" height="400">
+</div>
 
-## Frozen Argon Crystal
+- Pendulum motion from 0.00 to 1.00
+<div align ="center">
+  
+<img src="https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/ef6c880b-a0ba-4f0d-9665-f291e62ecd0e" width="1200" height="500">
+</div>
+
+
+
+
+
+### Frozen Argon Crystal, [Matlab code](./argonCry.m)
 
 <div align ="center">
   
@@ -61,5 +78,30 @@ Where V<sub>i,j</sub>(r) represents the Lennard–Jones potential:
   ![image](https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/7693fc49-a3dc-4b0c-a5b8-861af47f32f2)
 </div>
 
-### Results
-Grafici e immagini
+Additionally, temperature was computed using the following formula:
+<div align ="center">
+  
+  ![image](https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/e43fa3c6-c8b4-45e9-af35-62d05631a1d8)
+</div>
+
+#### Results
+- Velocity Verlet:
+  <div align ="center">
+  
+  ![argon E e T vv](https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/aba258e9-311a-4281-98c7-d832459a354f)
+  </div>
+- Eulero Forward:
+  <div align ="center">
+  
+  ![argon E e T fe](https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/ff39f45b-cd7f-4bd7-b412-111f4ad85bb0)
+  </div>
+- Eulero Backward:
+  <div align ="center">
+    
+  ![argon E e T be](https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/6bb6d436-ad0d-413b-becf-163793a6277b)
+  </div>
+- Crank-Nicolson:
+  <div align ="center">
+  
+  ![argon E e T cn](https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/03eeed65-335c-4702-b670-9cf1606f90f4)
+  </div>
