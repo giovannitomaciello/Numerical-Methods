@@ -37,7 +37,7 @@
     - 2nd order in _t_, permitting long timesteps,
     - Reversible,
     - Symplectic.
-
+#
 ### Double elastic pendulum, [Matlab code](./pendolo.m)
 <div align ="center">
   
@@ -54,19 +54,26 @@
 - Energy conservation
 <div align ="center">
   
-<img src="https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/aec5d3d8-2fb7-435f-a9c3-d831f43b617a" width="500" height="400">
+<img src="https://github.com/giovannitomaciello/Numerical-Methods/assets/120776791/d57d93fb-ddba-4bd2-9a1d-cca091ed73b3" width="500" height="400">
+
+<img src="https://github.com/giovannitomaciello/Numerical-Methods/assets/120776791/c02f6b72-4fa7-4b92-b54a-72385c8769c6" width="500" height="400">
+
 </div>
 
-- Pendulum motion from 0.00 to 1.00
+#
+- Pendulum motion from 0.00 to 10s
 <div align ="center">
+
+https://github.com/giovannitomaciello/Numerical-Methods/assets/120776791/66b9a125-7caa-47aa-b47a-42f81def5554
   
-<img src="https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/ef6c880b-a0ba-4f0d-9665-f291e62ecd0e" width="1200" height="500">
+https://github.com/giovannitomaciello/Numerical-Methods/assets/120776791/ed220e49-8909-4c92-9d47-1402c7d5abe9
+
 </div>
 
 
 
 
-
+#
 ### Frozen Argon Crystal, [Matlab code](./argonCry.m)
 
 <div align ="center">
@@ -94,23 +101,36 @@ Additionally, temperature was computed using the following formula:
 </div>
 
 #### Results
+
+<div align ="center">
+
+https://github.com/giovannitomaciello/Numerical-Methods/assets/120776791/9a921526-6490-465e-83b5-1ac2ed745873
+
+</div>
+
 - Velocity Verlet:
   <div align ="center">
   
-  ![argon E e T vv](https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/aba258e9-311a-4281-98c7-d832459a354f)
+  ![vv40](https://github.com/giovannitomaciello/Numerical-Methods/assets/120776791/741e25e3-a56d-450e-a0ca-6e139587749c)
+ ![vv80](https://github.com/giovannitomaciello/Numerical-Methods/assets/120776791/77fc90c8-72e7-4422-8ce5-b825b0453fe4)
+
   </div>
 - Eulero Forward:
   <div align ="center">
   
-  ![argon E e T fe](https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/ff39f45b-cd7f-4bd7-b412-111f4ad85bb0)
+  ![feul10](https://github.com/giovannitomaciello/Numerical-Methods/assets/120776791/debfde79-0479-4572-a912-bc6162cacc27)
+ ![feul20](https://github.com/giovannitomaciello/Numerical-Methods/assets/120776791/b8e2056f-1f63-40e0-bd10-a3476ffd9a07)
+
   </div>
 - Eulero Backward:
   <div align ="center">
-    
-  ![argon E e T be](https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/6bb6d436-ad0d-413b-becf-163793a6277b)
+  
+    ![beul20](https://github.com/giovannitomaciello/Numerical-Methods/assets/120776791/1045ee55-6b6a-44f0-9e3e-31948211db65)
+
   </div>
 - Crank-Nicolson:
   <div align ="center">
   
-  ![argon E e T cn](https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/03eeed65-335c-4702-b670-9cf1606f90f4)
+    ![nick20](https://github.com/giovannitomaciello/Numerical-Methods/assets/120776791/1a4d9169-1772-441c-9f56-90cc630d9f28)
+
   </div>
