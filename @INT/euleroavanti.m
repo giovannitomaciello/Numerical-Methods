@@ -9,16 +9,14 @@ p = zeros(NP,ND,NT);
 
 q(:,:,1) = q0;
 p(:,:,1) = p0;
+dt = diff(t);
 
 for i=2:length(t)
-    % time step
-    dt = t(i) - t(i-1);
-    
     % position
-    q(:,:,i) = dKdp(p(:,:,i-1))*dt + q(:,:,i-1);
+    q(:,:,i) = dKdp(p(:,:,i-1))*dt(i-1) + q(:,:,i-1);
 
     %momentum
-    p(:,:,i) = - dTdq(q(:,:,i-1))*dt + p(:,:,i-1);
+    p(:,:,i) = - dTdq(q(:,:,i-1))*dt(i-1) + p(:,:,i-1);
 
 end
 end

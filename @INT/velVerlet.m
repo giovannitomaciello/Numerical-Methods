@@ -14,23 +14,20 @@ p(:,:,1) = p0;
  
 %Ftmp ha dimensioni [NP,ND] e Ftmp(i,j) rappresenta la componente j sulla particella i  
 Ftmp = - dTdq(q0);
+dt = diff(t);
 
 for i = 2:NT
-    % time step
-    dt = t(i) - t(i-1);
-
     %momentum tmp
-    ptmp = Ftmp*dt/2 + p(:,:,i-1);
+    ptmp = Ftmp*dt(i-1)/2 + p(:,:,i-1);
    
     % position
-    q(:,:,i) = dKdp(ptmp)*dt + q(:,:,i-1);
+    q(:,:,i) = dKdp(ptmp)*dt(i-1) + q(:,:,i-1);
     
 
     %Force tmp
     Ftmp = - dTdq(q(:,:,i));
    
     %momentum
-    p(:,:,i) = Ftmp*dt/2 + ptmp;
-    
+    p(:,:,i) = Ftmp*dt(i-1)/2 + ptmp;
 end
 end
