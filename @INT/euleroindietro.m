@@ -18,9 +18,9 @@ for i=2:NT
     q0 = q(:,:,i-1);  
     p0 = p(:,:,i-1);
     
-    opt = optimoptions("fsolve","Display","none","Algorithm","levenberg-marquardt");
+    opt = optimoptions("fsolve","Display","none");
     unk = fsolve(@(unk) sysEB(unk, q0, p0, dt(i-1), dKdp, dTdq),....
-        unk, opt);
+        unk*(1 + 1e-6), opt);
 
     q(:,:,i) = reshape(unk(1:NP*ND,:),[],3);
     p(:,:,i) = reshape(unk(NP*ND+1:end,:),[],3);
