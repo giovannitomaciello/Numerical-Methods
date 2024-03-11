@@ -1,4 +1,13 @@
-# Numerical Methods for Molecular Simulation <div align="right"> ![MATLAB](https://img.shields.io/badge/MATLAB-e86e05?style=for-the-badge&logo=Octave&logoColor=white) ![POLIMI](https://img.shields.io/badge/POLIMI-050065?style=for-the-badge)</div> 
+
+
+<div align="center">
+    <h1>Numerical Methods for Molecular Simulation</h1>
+    
+![MATLAB](https://img.shields.io/badge/MATLAB-e86e05?style=for-the-badge&logo=Octave&logoColor=white)
+![POLIMI](https://img.shields.io/badge/POLIMI-050065?style=for-the-badge)
+    
+</div> 
+
 <h4 align="right">Andrea Somma, Giovanni Tomaciello, Paolo Zagardo</h4> 
 
 ## Group Assignment 1 
@@ -9,26 +18,25 @@
 
 ### Implemented numerical methods:
 -  [Forward Euler method](./@INT/euleroavanti.m)
-    - Explicit
-    - 1st order
-    - Instable solution - Amplification
-    - Not reversible
+    - Explicit,
+    - 1st order,
+    - Instable solution - Amplification,
+    - Not reversible.
 -  [Backward Euler method](./@INT/euleroindietro.m)
-    - Implicit
-    - 1st order 
-    - Instable solution - Dumping
-    - Not reversible
+    - Implicit,
+    - 1st order,
+    - Stable solution - Damping,
+    - Not reversible.
 -  [Crank–Nicolson method](./@INT/crankNick.m)
-    - Implicit
-    - 2nd order in both _x_ and _t_, permitting long timesteps
-    - Stable solution, but out of phase
-    - Reversible
+    - Implicit,
+    - 2nd order in _t_, permitting long timesteps,
+    - Stable solution, but out of phase,
+    - Reversible.
 -  [Velocity Verlet method](./@INT/velVerlet.m)
-    - Explicit
-    - 2nd order in _t_, permitting long timesteps
-    - Stable solution
-    - Reversible
-    - Symplectic
+    - Explicit,
+    - 2nd order in _t_, permitting long timesteps,
+    - Reversible,
+    - Symplectic.
 
 ### Double elastic pendulum, [Matlab code](./pendolo.m)
 <div align ="center">
@@ -36,6 +44,7 @@
   <img src="https://github.com/giovannitomaciello/Numerical-Methods/assets/162450790/8d5d75d5-94d7-4aba-9df0-2483e19cfc79" width="700" height="400">
 </div>
 
+#### Features:
 - two or more masses;
 - forces: gravity, elastic force;
 - no friction contribution;
