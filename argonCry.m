@@ -93,12 +93,7 @@ function F = LennardJonesForce(q, sigmaij, epsij)
     Fx = -Fmat.*dx;
     Fy = -Fmat.*dy;
     Fz = -Fmat.*dz;
-
-    % set diagonal to 0
-    Fx = Fx - diag(diag(Fx));
-    Fy = Fy - diag(diag(Fy));
-    Fz = Fz - diag(diag(Fz));
-
+    
     % sum forces
     F(:,1) = sum(Fx,2);
     F(:,2) = sum(Fy,2);

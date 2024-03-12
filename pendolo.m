@@ -18,7 +18,7 @@ T = @(q) -m*q*g' + k/2*((vecnorm(diff([zeros(1,ND);q])')-l).^2)';
 dKdp = @(p) p./m';
 v = ones(1,NP);
 matrice = diag(v) - diag(v(2:end),1);
-dTdqi = @(q,i) - m'*g(i) - matrice*(k.*(diff([0;q(:,i)]))'.*(l./vecnorm(diff([0 0 0;q])')-1))';
+dTdqi = @(q,i) - m'*g(i) - matrice*(k.*(diff([0;q(:,i)]))'.*(l./vecnorm(diff([zeros(1,ND);q])')-1))';
 dTdq = @(q) [dTdqi(q,1) dTdqi(q,2) dTdqi(q,3)];
 
 
