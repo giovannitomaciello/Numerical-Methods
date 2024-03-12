@@ -65,27 +65,21 @@ xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
 ylabel("(E - E_0)/k_b [K]","FontSize",11,"FontWeight","bold")
 
 %% 3D plot
-% Segmenti che uniscono gli atomi adiacenti
-edges = [1, 3; 1, 5; 1, 7; 1, 9; 1, 11; 2, 4; 2, 5; 2, 7; 2, 10; 2, 12;
-         3, 6; 3, 8; 3, 9; 3, 11; 4, 6; 4, 8; 4, 10; 4, 12; 5, 7; 5, 9;
-         5, 10; 6, 8; 6, 9; 6, 10; 7, 11; 7, 12; 8, 11; 8, 12; 9,10; 11,12];
 
 figure(4)
 for i = 1:length(t)
     % plot
     grid on
     hold on
-    for j = 1:30
-        plot3(q(edges(j, :), 1, i), q(edges(j, :), 2, i), q(edges(j, :), 3, i), 'k-.', 'LineWidth', 1);
-    end
-    scatter3(q(:, 1, i), q(:, 2, i), q(:, 3, i), 100, 'red', 'filled');
+    DT = delaunayTriangulation(q(:,:,i));
+    tetramesh(DT,'faceAlpha',0,'lineStyle','--')
+    scatter3(DT.Points(:,1),DT.Points(:,2),DT.Points(:,3),80,'filled')
     % annotate time
     text(0.85,0.95,sprintf("t = %.4f ns",t(i)/1e-9),'Units','normalized')
     xlim([min(q(:,1,:),[],'all') max(q(:,1,:),[],'all')])
     ylim([min(q(:,2,:),[],'all') max(q(:,2,:),[],'all')])
     view(3)
     drawnow
-    pause(.01) 
     clf
 end
 
