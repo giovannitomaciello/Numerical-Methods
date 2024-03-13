@@ -29,12 +29,13 @@ dKdp = @(p) p./m;
 F = @(q) LennardJonesForce(q, sigmaij, epsij);
 
 %% init
-t = 0:80e-15:0.2e-9;
+t = 0:10e-15:0.2e-9;
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %[q p] = int.velVerlet(q0,p0,F,dKdp,t);
 %[q p] = int.euleroavanti(q0,p0,F,dKdp,t);
+[q p] = int.crankNick(q0,p0,F,dKdp,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 1:length(t)
@@ -42,37 +43,37 @@ for i = 1:length(t)
     E(i) = Energy(q(:,:,i), p(:,:,i), m, sigmaij, epsij);
 end
 
-% %%
-% figure
-% plot(t/1e-9,T-T0,"LineWidth",1.4)
-% ylim([-30 30])
-% xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
-% ylabel("T [K]","FontSize",11,"FontWeight","bold")
-% 
-% %%
-% figure
-% plot(t/1e-9,(E-Energy0)/kb,"LineWidth",1.4)
-% ylim([-30 30])
-% xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
-% ylabel("(E - E_0)/k_b [K]","FontSize",11,"FontWeight","bold")
-% 
-% %%
-% figure
-% axis square
-% 
-% xlabel("x [m]","FontSize",11,"FontWeight","bold")
-% ylabel("y [m]","FontSize",11,"FontWeight","bold")
-% 
-% for i = 1:length(t)
-%     % plot
-%     scatter(q(:,1,i),q(:,2,i))
-%     % annotate time
-%     text(0.85,0.95,sprintf("t = %.4f ns",t(i)/1e-9),'Units','normalized')
-%     xlim([min(q(:,1,:),[],'all') max(q(:,1,:),[],'all')])
-%     ylim([min(q(:,2,:),[],'all') max(q(:,2,:),[],'all')])
-%     drawnow
-%     pause(.01) 
-% end
+%%
+figure
+plot(t/1e-9,T-T0,"LineWidth",1.4)
+ylim([-30 30])
+xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
+ylabel("T [K]","FontSize",11,"FontWeight","bold")
+
+%%
+figure
+plot(t/1e-9,(E-Energy0)/kb,"LineWidth",1.4)
+ylim([-30 30])
+xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
+ylabel("(E - E_0)/k_b [K]","FontSize",11,"FontWeight","bold")
+
+%%
+figure
+axis square
+
+xlabel("x [m]","FontSize",11,"FontWeight","bold")
+ylabel("y [m]","FontSize",11,"FontWeight","bold")
+
+for i = 1:length(t)
+    % plot
+    scatter(q(:,1,i),q(:,2,i))
+    % annotate time
+    text(0.85,0.95,sprintf("t = %.4f ns",t(i)/1e-9),'Units','normalized')
+    xlim([min(q(:,1,:),[],'all') max(q(:,1,:),[],'all')])
+    ylim([min(q(:,2,:),[],'all') max(q(:,2,:),[],'all')])
+    drawnow
+    pause(.01) 
+end
 
 function F = LennardJonesForce(q, sigmaij, epsij)
     n = length(q);

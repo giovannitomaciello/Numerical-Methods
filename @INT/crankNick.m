@@ -34,10 +34,10 @@ function toZero = sysEB(unk, q0, p0, dt, dKdp, dTdq)
     p = reshape(unk(NP*ND+1:end,:),[],3);
 
     % position
-    zeroq = (dKdp(p) + dKdp(p0))*dt/2 - q + q0;
+    zeroq = dKdp(p) + dKdp(p0) + (- q + q0)/dt*2;
 
     %momentum
-    zerop = (dTdq(q) + dTdq(q0))*dt/2 + p - p0;
+    zerop = dTdq(q) + dTdq(q0) + (p - p0)/dt*2;
 
     toZero = [zeroq(:); zerop(:)];
 end

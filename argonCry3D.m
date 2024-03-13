@@ -45,6 +45,7 @@ t = 0:20e-15:0.5e-9;
 %[q p] = int.velVerlet(q0,p0,F,dKdp,t);
 %[q p] = int.euleroavanti(q0,p0,F,dKdp,t);
 %[q p] = int.euleroindietro(q0,p0,F,dKdp,t);
+%[q p] = int.crankNick(q0,p0,F,dKdp,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 1:length(t)
