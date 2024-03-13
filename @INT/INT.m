@@ -14,4 +14,7 @@ classdef INT
     methods (Static)
         [q,p] = posVerlet(q0,p0,dTdq,dKdp,m,t)
     end
+    methods (Static)
+        [q, p] = symplecticEuler(q0,p0,dTdq,dKdp,t)
+    end
 end

@@ -25,7 +25,7 @@ dTdq = @(q) [dTdqi(q,1) dTdqi(q,2) dTdqi(q,3)];
 %init
 q0 = [1 0 0; 2 0 0];%; 3 0 0; 4 0 0; 4.5 0 0; 5 0 0];
 p0 = [0 0 0;0 0 0];%; 0 0 0; 0 0 0; 0 0 0; 0 0 0];
-t = 0:0.001:1100;
+t = 0:0.0001:10;
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -33,7 +33,8 @@ t = 0:0.001:1100;
 %[q p] = int.euleroindietro(q0,p0,dTdq,dKdp,t);
 %[q p] = int.euleroavanti(q0,p0,dTdq,dKdp,t);
 %[q p] = int.crankNick(q0,p0,dTdq,dKdp,t);
-[q p] = int.posVerlet(q0,p0,dTdq,dKdp,m,t);
+%[q p] = int.posVerlet(q0,p0,dTdq,dKdp,m,t);
+[q, p] = int.symplecticEuler(q0,p0,dTdq,dKdp,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 1:length(t)
