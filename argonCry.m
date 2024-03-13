@@ -33,9 +33,9 @@ t = 0:10e-15:0.2e-9;
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%[q p] = int.velVerlet(q0,p0,F,dKdp,t);
+[q p] = int.velVerlet(q0,p0,F,dKdp,t);
 %[q p] = int.euleroavanti(q0,p0,F,dKdp,t);
-[q p] = int.crankNick(q0,p0,F,dKdp,t);
+%[q p] = int.crankNick(q0,p0,F,dKdp,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 1:length(t)
