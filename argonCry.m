@@ -34,8 +34,11 @@ t = 0:10e-15:0.2e-9;
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [q p] = int.velVerlet(q0,p0,F,dKdp,t);
+%[q p] = int.euleroindietro(q0,p0,F,dKdp,t);
 %[q p] = int.euleroavanti(q0,p0,F,dKdp,t);
 %[q p] = int.crankNick(q0,p0,F,dKdp,t);
+%[q p] = int.posVerlet(q0,p0,F,dKdp,m,t);
+%[q,p] = int.symplecticEuler(q0,p0,F,dKdp,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 1:length(t)
@@ -45,19 +48,23 @@ end
 
 %%
 figure
+subplot(2,1,1)
 plot(t/1e-9,T-T0,"LineWidth",1.4)
 ylim([-30 30])
 xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
 ylabel("T [K]","FontSize",11,"FontWeight","bold")
 
-%%
-figure
+%
+
+subplot(2,1,2)
 plot(t/1e-9,(E-Energy0)/kb,"LineWidth",1.4)
 ylim([-30 30])
 xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
 ylabel("(E - E_0)/k_b [K]","FontSize",11,"FontWeight","bold")
 
 %%
+qc = q(1,:,:); % cosi l'atomo centrale sta fermo
+q = q - qc;
 figure
 axis square
 

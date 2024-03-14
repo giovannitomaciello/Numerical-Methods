@@ -12,11 +12,10 @@ dist = sigmaij*2^(1/6)/2;       % distanza iniziale tra ogni atomo e quelli adia
 qx0 = [0 0 0 0 1 1 -1 -1 phi phi -phi -phi 0]*dist; % nm
 qy0 = [1 1 -1 -1 phi -phi phi -phi 0 0 0 0 0]*dist; % nm
 qz0 = [phi -phi phi -phi 0 0 0 0 1 -1 1 -1 0]*dist; % nm
-
 q0prima = [qx0', qy0', qz0']; % nm
 
 % Rotazione per vedere da varie angolazioni la figura 3D
-theta = pi/7; % = 20°
+theta = pi/1; % 
 Ry = [cos(theta)  0  sin(theta);
           0       1       0    ;
      -sin(theta)  0  cos(theta)];
@@ -28,10 +27,13 @@ r = 1 + 0.01.*randn(Na,3);
 q0 = q0sim.*r;
 
 m = 66.34e-27*ones(1,Na)'; % Kg
-px0 = zeros(1,Na); % nm/ns
-py0 = zeros(1,Na); % nm/ns
-pz0 = zeros(1,Na); % nm/ns
-p0 = [px0', py0', pz0']; % nm/ns
+% px0 = zeros(1,Na); % nm/ns
+% py0 = zeros(1,Na); % nm/ns
+% pz0 = zeros(1,Na); % nm/ns
+% p0 = [px0', py0', pz0']; % nm/ns
+pnn = randi([-5 5], Na-1,3);       
+p_centro = -sum(pnn,1);    % così da avere p0 totale  nulla
+p0 = [p_centro; pnn].*m*10; % nm/ns
 
 %% Forces
 dKdp = @(p) p./m;
@@ -42,7 +44,7 @@ t = 0:20e-15:0.5e-9;
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%[q p] = int.velVerlet(q0,p0,F,dKdp,t);
+[q p] = int.velVerlet(q0,p0,F,dKdp,t);
 %[q p] = int.euleroavanti(q0,p0,F,dKdp,t);
 %[q p] = int.euleroindietro(q0,p0,F,dKdp,t);
 %[q p] = int.crankNick(q0,p0,F,dKdp,t);
@@ -66,6 +68,9 @@ xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
 ylabel("(E - E_0)/k_b [K]","FontSize",11,"FontWeight","bold")
 
 %% 3D plot
+
+qc = q(end,:,:); % cosi l'atomo centrale sta fermo
+q = q - qc;
 
 figure(4)
 for i = 1:length(t)
