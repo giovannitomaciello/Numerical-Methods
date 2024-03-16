@@ -38,6 +38,7 @@ p0 = [px0', py0', pz0']; % nm/ns
 %% Forces
 dKdp = @(p) p./m;
 F = @(q) LennardJonesForce(q, sigmaij, epsij);
+G = @(q,lambda) constraints(q,lambda);
 
 %% constraints
 C = sparse(Na,Na);
@@ -53,25 +54,26 @@ t = 0:200e-15:0.5e-9;
 %[q p] = int.euleroavanti(q0,p0,F,dKdp,t);
 %[q p] = int.euleroindietro(q0,p0,F,dKdp,t);
 %[q p] = int.crankNick(q0,p0,F,dKdp,t);
-[q p] = cint. rattle(q0,p0,F,dKdp,C,t);
+%[q p] = cint. rattle(q0,p0,F,dKdp,C,t);
+q = cint.Shake(q0,p0,F,dKdp,G,C,m,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for i = 1:length(t)
-    T(i) = sum(m.*( sum( (p(:,:,i)./m).^2 ,2) )) /Na/2/kb;
-    E(i) = Energy(q(:,:,i), p(:,:,i), m, sigmaij, epsij);
-end
-
-%%
-figure(1)
-plot(t/1e-9,T-mean(T),"LineWidth",1.4)
-xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
-ylabel("T [K]","FontSize",11,"FontWeight","bold")
-
-%%
-figure(2)
-plot(t/1e-9,(E-mean(E))/kb,"LineWidth",1.4)
-xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
-ylabel("(E - E_0)/k_b [K]","FontSize",11,"FontWeight","bold")
+% for i = 1:length(t)
+%     T(i) = sum(m.*( sum( (p(:,:,i)./m).^2 ,2) )) /Na/2/kb;
+%     E(i) = Energy(q(:,:,i), p(:,:,i), m, sigmaij, epsij);
+% end
+% 
+% %%
+% figure(1)
+% plot(t/1e-9,T-mean(T),"LineWidth",1.4)
+% xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
+% ylabel("T [K]","FontSize",11,"FontWeight","bold")
+% 
+% %%
+% figure(2)
+% plot(t/1e-9,(E-mean(E))/kb,"LineWidth",1.4)
+% xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
+% ylabel("(E - E_0)/k_b [K]","FontSize",11,"FontWeight","bold")
 
 %% 3D plot
 
@@ -93,6 +95,20 @@ for i = 1:50:length(t)
 end
 
 %% Functions
+
+function G=constraints(q,lambda)
+    n=length(q);
+    G=zeros(n,3);
+    dx = 2*(q(:,1) - q(:,1)').*lambda;
+    dy = 2*(q(:,2) - q(:,2)').*lambda;
+    dz = 2*(q(:,3) - q(:,3)').*lambda;
+    % sum
+    G(:,1) = sum(dx,2);
+    G(:,2) = sum(dy,2);
+    G(:,3) = sum(dz,2);
+
+end
+
 function F = LennardJonesForce(q, sigmaij, epsij)
     n = length(q);
     F = zeros(n,3);
