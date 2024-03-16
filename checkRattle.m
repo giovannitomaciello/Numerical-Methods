@@ -43,7 +43,6 @@ G = @(q,lambda) constraints(q,lambda);
 %% constraints
 C = sparse(Na,Na);
 C(1,2) = dist*phi*2;
-C(2,1) = dist*phi*2;
 
 %% init
 t = 0:200e-15:0.5e-9;
@@ -54,8 +53,8 @@ t = 0:200e-15:0.5e-9;
 %[q p] = int.euleroavanti(q0,p0,F,dKdp,t);
 %[q p] = int.euleroindietro(q0,p0,F,dKdp,t);
 %[q p] = int.crankNick(q0,p0,F,dKdp,t);
-%[q p] = cint. rattle(q0,p0,F,dKdp,C,t);
-q = cint.Shake(q0,p0,F,dKdp,G,C,m,t);
+[q p] = cint. rattle(q0,p0,F,dKdp,G,C,t);
+%q = cint.Shake(q0,p0,F,dKdp,G,C,m,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % for i = 1:length(t)
@@ -96,17 +95,18 @@ end
 
 %% Functions
 
-function G=constraints(q,lambda)
-    n=length(q);
-    G=zeros(n,3);
-    dx = 2*(q(:,1) - q(:,1)').*lambda;
-    dy = 2*(q(:,2) - q(:,2)').*lambda;
-    dz = 2*(q(:,3) - q(:,3)').*lambda;
-    % sum
-    G(:,1) = sum(dx,2);
-    G(:,2) = sum(dy,2);
-    G(:,3) = sum(dz,2);
+function [G,r2] = constraints(q,lambda)
+    n = length(q);
+    G = zeros(n,3);
+    dx = 2*(q(:,1) - q(:,1)'); dxC = dx.*lambda;
+    dy = 2*(q(:,2) - q(:,2)'); dyC = dy.*lambda;
+    dz = 2*(q(:,3) - q(:,3)'); dzC = dz.*lambda;
+    r2 = dx.^2 + dy.^2 + dz.^2;
 
+    % sum
+    G(:,1) = sum(dxC,2);
+    G(:,2) = sum(dyC,2);
+    G(:,3) = sum(dzC,2);
 end
 
 function F = LennardJonesForce(q, sigmaij, epsij)
