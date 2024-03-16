@@ -43,6 +43,7 @@ G = @(q,lambda) constraints(q,lambda);
 %% constraints
 C = sparse(Na,Na);
 C(1,2) = dist*phi*2;
+C(2,1) = dist*phi*2;
 
 %% init
 t = 0:200e-15:0.5e-9;

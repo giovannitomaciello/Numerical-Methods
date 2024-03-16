@@ -54,7 +54,7 @@ function toZero = SYS1(UNK, q0, p0, Ftmp, dKdp, C2, G, Index, Indexr, sparseM, N
     toZerolambda = r2(Index) - nonzeros(triu(C2));
     
     % all to zero
-    toZero = [toZeroq(:); toZerop(:); toZerolambda(:)]
+    toZero = [toZeroq(:); toZerop(:); toZerolambda(:)];
 end
 
 function toZero = SYS2(UNK, q0, p0, Ftmp, dKdp, C2, G, Index, Indexr, sparseM, NP, ND, dt)
@@ -68,7 +68,7 @@ function toZero = SYS2(UNK, q0, p0, Ftmp, dKdp, C2, G, Index, Indexr, sparseM, N
 
     % to zero vectors
     toZerop = - p + p0 - dt/2*(-Ftmp + Gq.*lambdaV);
-    toZerolambda = (r2(Index) - nonzeros(triu(C2)))*norm(dKdp(p(Indexr,:)),2);
+    toZerolambda = Gq.*dKdp(p);
 
     % all to zero
     toZero = [toZerop(:); toZerolambda(:)];
