@@ -38,18 +38,20 @@ for i = 3:NT
 
     lambda = zeros(NP,NP);
     lambda(ind_constraints) = unk;
+    [Gq,r2] = G(q_prec,lambda);
 
-    q(:,:,i)=q_tilde-dt^2*G(q_prec,lambda)./m;
+    q(:,:,i)=q_tilde-dt^2*Gq./m;
 
 end
 end
 
-function toZero = sysEB(unk,NP,q_tilde,q_prec,G,C,m,ind_constraints,dt)
+function toZero = sysEB(unk,NP,q_tilde,~,G,C,m,ind_constraints,dt)
              
         lambda = zeros(NP,NP);
         lambda(ind_constraints) = unk;
 
-        q = q_tilde-dt^2*G(q_prec,lambda)./m;
+        [Gq,~] = G(q_tilde,lambda);
+        q = q_tilde-dt^2*Gq./m;
 
         dx = q(:,1) - q(:,1)';
         dy = q(:,2) - q(:,2)';

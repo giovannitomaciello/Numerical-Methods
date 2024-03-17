@@ -103,9 +103,9 @@ end
 function [G,r2] = constraints(q,lambda)
     n = length(q);
     G = zeros(n,3);
-    dx = 2*(q(:,1) - q(:,1)'); dxC = dx.*lambda;
-    dy = 2*(q(:,2) - q(:,2)'); dyC = dy.*lambda;
-    dz = 2*(q(:,3) - q(:,3)'); dzC = dz.*lambda;
+    dx = q(:,1) - q(:,1)'; dxC = 2*dx.*lambda;
+    dy = q(:,2) - q(:,2)'; dyC = 2*dy.*lambda;
+    dz = q(:,3) - q(:,3)'; dzC = 2*dz.*lambda;
     r2 = dx.^2 + dy.^2 + dz.^2;
 
     % sum
