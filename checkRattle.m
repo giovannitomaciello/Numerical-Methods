@@ -25,7 +25,7 @@ q0sim = q0prima*Ry;    % q0sim è perfettamente simmetrico
 
 % 
 Na = length(qx0);
-r = 1 + 0.1.*randn(Na,3);
+r = 1 + 0.01.*randn(Na,3);
 r(1,:) = [1 1 1]; r(2,:) = [1 1 1];
 q0 = q0sim.*r;
 
@@ -46,7 +46,7 @@ C(1,2) = dist*phi*2;
 C(2,1) = dist*phi*2;
 
 %% init
-t = 0:200e-15:0.5e-9;
+t = 0:2e-15:0.5e-9;
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -54,8 +54,8 @@ t = 0:200e-15:0.5e-9;
 %[q p] = int.euleroavanti(q0,p0,F,dKdp,t);
 %[q p] = int.euleroindietro(q0,p0,F,dKdp,t);
 %[q p] = int.crankNick(q0,p0,F,dKdp,t);
-[q p] = cint. rattle(q0,p0,F,dKdp,G,C,t);
-%q = cint.Shake(q0,p0,F,dKdp,G,C,m,t);
+%[q p] = cint. rattle(q0,p0,F,dKdp,G,C,t);
+q = cint.shake(q0,p0,F,dKdp,G,C,m,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % for i = 1:length(t)
@@ -85,10 +85,14 @@ for i = 1:50:length(t)
     DT = delaunayTriangulation(q(:,:,i));
     tetramesh(DT,'faceAlpha',0,'lineStyle','--')
     scatter3(DT.Points(:,1),DT.Points(:,2),DT.Points(:,3),80,'filled')
+    dx = DT.Points(1:2,1) - DT.Points(1:2,1)';
+    dy = DT.Points(1:2,2) - DT.Points(1:2,2)';
+    dz = DT.Points(1:2,3) - DT.Points(1:2,3)';
+    r = sqrt(dx.^2 + dy.^2 + dz.^2)
     % annotate time
     text(0.85,0.95,sprintf("t = %.4f ns",t(i)/1e-9),'Units','normalized')
-    xlim([min(q(:,1,:),[],'all') max(q(:,1,:),[],'all')])
-    ylim([min(q(:,2,:),[],'all') max(q(:,2,:),[],'all')])
+    %xlim([min(q(:,1,:),[],'all') max(q(:,1,:),[],'all')])
+    %ylim([min(q(:,2,:),[],'all') max(q(:,2,:),[],'all')])
     view(3)
     drawnow
     clf

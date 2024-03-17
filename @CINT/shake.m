@@ -1,4 +1,4 @@
-function q = Shake(q0,p0,dTdq,dKdp,G,C,m,t)
+function q = shake(q0,p0,dTdq,dKdp,G,C,m,t)
 
 [NP, ND] = size(q0);
 NT = numel(t);
@@ -33,8 +33,8 @@ for i = 3:NT
     q_tilde = 2*q(:,:,i-1) - q(:,:,i-2) - dt^2 * dTdq(q(:,:,i-1))./m;
     q_prec = q(:,:,i-1);
 
-    opt = optimoptions("fsolve","Display","none");
-    unk = fsolve(@(unk) sysEB(unk,NP,q_tilde,q_prec,G,C,m,ind_constraints),unk, opt);
+    opt = optimoptions("fsolve","Display","iter-detailed");
+    unk = fsolve(@(unk) sysEB(unk,NP,q_tilde,q_prec,G,C,m,ind_constraints,dt),unk, opt);
 
     lambda = zeros(NP,NP);
     lambda(ind_constraints) = unk;
@@ -42,9 +42,9 @@ for i = 3:NT
     q(:,:,i)=q_tilde-dt^2*G(q_prec,lambda)./m;
 
 end
+end
 
-
-    function toZero = sysEB(unk,NP,q_tilde,q_prec,G,C,m,ind_constraints)
+function toZero = sysEB(unk,NP,q_tilde,q_prec,G,C,m,ind_constraints,dt)
              
         lambda = zeros(NP,NP);
         lambda(ind_constraints) = unk;
@@ -57,8 +57,5 @@ end
         r = dx.^2 + dy.^2 + dz.^2; 
        
         toZero = r(ind_constraints).^2 - C(ind_constraints).^2;
-
-    end
-
 
 end

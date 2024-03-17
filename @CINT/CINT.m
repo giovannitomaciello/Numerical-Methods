@@ -4,6 +4,6 @@ classdef CINT
     end
 
     methods (Static)
-        q = Shake(q0,p0,dTdq,dKdp,G,C,m,t);
+        q = shake(q0,p0,dTdq,dKdp,G,C,m,t);
     end
 end
