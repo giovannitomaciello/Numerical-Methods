@@ -46,7 +46,7 @@ C(1,2) = dist*phi*2;
 C(2,1) = dist*phi*2;
 
 %% init
-t = 0:2e-15:0.5e-9;
+t = 0:20e-15:0.5e-9;
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -77,25 +77,26 @@ q = cint.shake(q0,p0,F,dKdp,G,C,m,t);
 
 %% 3D plot
 
-figure(4)
+%figure(4)
 for i = 1:50:length(t)
     % plot
-    grid on
-    hold on
+    %grid on
+    %hold on
     DT = delaunayTriangulation(q(:,:,i));
-    tetramesh(DT,'faceAlpha',0,'lineStyle','--')
-    scatter3(DT.Points(:,1),DT.Points(:,2),DT.Points(:,3),80,'filled')
+    %tetramesh(DT,'faceAlpha',0,'lineStyle','--')
+    %scatter3(DT.Points(:,1),DT.Points(:,2),DT.Points(:,3),80,'filled')
+    %scatter3(DT.Points(1:2,1),DT.Points(1:2,2),DT.Points(1:2,3),80,'filled','r')
     dx = DT.Points(1:2,1) - DT.Points(1:2,1)';
     dy = DT.Points(1:2,2) - DT.Points(1:2,2)';
     dz = DT.Points(1:2,3) - DT.Points(1:2,3)';
-    r = sqrt(dx.^2 + dy.^2 + dz.^2)
+    r_(i) = sum(sum(sqrt(dx.^2 + dy.^2 + dz.^2)))/2;
     % annotate time
-    text(0.85,0.95,sprintf("t = %.4f ns",t(i)/1e-9),'Units','normalized')
+    %text(0.85,0.95,sprintf("t = %.4f ns",t(i)/1e-9),'Units','normalized')
     %xlim([min(q(:,1,:),[],'all') max(q(:,1,:),[],'all')])
     %ylim([min(q(:,2,:),[],'all') max(q(:,2,:),[],'all')])
-    view(3)
-    drawnow
-    clf
+    %view(3)
+    %drawnow
+    %clf
 end
 
 %% Functions
