@@ -40,10 +40,10 @@ p0 = zeros(size(q0));
 
 %% constraint matrix
 C = sparse(size(q0,1),size(q0,1));
-for i = 1:3:size(q0,1)
-    C(3*i-2,3*i-1) = HOdist;
-    C(3*i-2,3*i) = HOdist;
-    C(3*i-1,3*i) = HHdist;
+for i = 3:3:size(q0,1)
+    C(i-2,i-1) = HOdist;
+    C(i-2,i) = HOdist;
+    C(i-1,i) = HHdist;
 end
 
  C = C + C';
