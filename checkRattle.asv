@@ -44,7 +44,7 @@ G = @(q,lambda) constraints(q,lambda);
 C = sparse(Na,Na);
 C(1,2) = dist*phi*2;
 C(2,1) = dist*phi*2;
-ind_constraints = find(triu(C));
+
 
 %% init
 t = 0:1e-4:0.5;
@@ -90,8 +90,7 @@ for i = 1:50:length(t)
     dx = q(:,1,i) - q(:,1,i)';
     dy = q(:,2,i) - q(:,2,i)';
     dz = q(:,3,i) - q(:,3,i)';
-    r=sqrt(dx.^2 + dy.^2 + dz.^2);
-    error(i) = r(ind_constraints) - C(ind_constraints);
+    error(i) = sum(sqrt(dx.^2 + dy.^2 + dz.^2) - C,'all')/2;
     % annotate time
     %text(0.85,0.95,sprintf("t = %.4f ns",t(i)/1e-9),'Units','normalized')
     %xlim([min(q(:,1,:),[],'all') max(q(:,1,:),[],'all')])
