@@ -40,11 +40,20 @@ p0 = zeros(size(q0));
 
 %% constraint matrix
 C = sparse(size(q0,1),size(q0,1));
+connectivity = C;
 for i = 3:3:size(q0,1)
     C(i-2,i-1) = HOdist;
     C(i-2,i) = HOdist;
     C(i-1,i) = HHdist;
+
+    connectivity(i-2,i-1) = HOdist;
+    connectivity(i-2,i) = HOdist;
 end
 
  C = C + C';
 
+gplot3(connectivity,q0,'lineWidth',2,'Color','k')
+hold on
+scatter3(q0(1:3:end,1),q0(1:3:end,2),q0(1:3:end,3),80,"red","filled")
+scatter3(q0(2:3:end,1),q0(2:3:end,2),q0(2:3:end,3),60,"blue","filled")
+scatter3(q0(3:3:end,1),q0(3:3:end,2),q0(3:3:end,3),60,"blue","filled")
