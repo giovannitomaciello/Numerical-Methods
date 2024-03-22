@@ -7,14 +7,14 @@ HHdist = 0.96*sind(HOangle/2)*2;
 
 %% 3D water molecules
 positionNoRot = [0 HOdist*cosd(HOangle/2); -HOdist*sind(HOangle/2) 0; HOdist*sind(HOangle/2) 0];
-baricenter = sum(positionNoRot)/3;
-positionNoRot = positionNoRot - baricenter;
+shift = [0 HOdist*cosd(HOangle/2)];
+positionNoRot = positionNoRot - shift;
 
 %% rotate by 60 deg and add to the original position
 position1layer = [];
 for i = 1:6
     positionRot = positionNoRot*[cosd(120*i + 120) -sind(120*i + 120); sind(120*i + 120) cosd(120*i + 120)];
-    positionTrasl = positionRot + [0 5; 0 5; 0 5];
+    positionTrasl = positionRot + [0 2.2; 0 2.2; 0 2.2];
     position1layer = [positionTrasl*[cosd(60*i) -sind(60*i); sind(60*i) cosd(60*i)]; position1layer];
 end
 position1layer = [position1layer , -ones(length(position1layer),1)];
@@ -22,7 +22,7 @@ position1layer = [position1layer , -ones(length(position1layer),1)];
 position2layer = [];
 for i = 1:6
     positionRot = positionNoRot*[cosd(120*i - 120) -sind(120*i - 120); sind(120*i - 120) cosd(120*i - 120)];
-    positionTrasl = positionRot + [0 5; 0 5; 0 5];
+    positionTrasl = positionRot + [0 2.2; 0 2.2; 0 2.2];
     position2layer = [positionTrasl*[cosd(60*i) -sind(60*i); sind(60*i) cosd(60*i)]; position2layer];
 end
 position2layer = [position2layer , zeros(length(position2layer),1)];
@@ -30,7 +30,7 @@ position2layer = [position2layer , zeros(length(position2layer),1)];
 position3layer = [];
 for i = 1:6
     positionRot = positionNoRot*[cosd(120*i) -sind(120*i); sind(120*i) cosd(120*i)];
-    positionTrasl = positionRot + [0 5; 0 5; 0 5];
+    positionTrasl = positionRot + [0 2.2; 0 2.2; 0 2.2];
     position3layer = [positionTrasl*[cosd(60*i) -sind(60*i); sind(60*i) cosd(60*i)]; position3layer];
 end
 position3layer = [position3layer , ones(length(position3layer),1)];
