@@ -25,8 +25,7 @@ q0sim = q0prima*Ry;    % q0sim è perfettamente simmetrico
 
 % 
 Na = length(qx0);
-r = 1 + 0.01.*randn(Na,3);
-r(1,:) = [1 1 1]; r(2,:) = [1 1 1];
+r = 1;% + 0.01.*randn(Na,3);
 q0 = q0sim.*r;
 
 m = 66.34/1.66*ones(1,Na)'; % Kg
@@ -44,6 +43,10 @@ G = @(q,lambda) constraints(q,lambda);
 C = sparse(Na,Na);
 C(1,2) = dist*phi*2;
 C(2,1) = dist*phi*2;
+C(3,4) = dist*phi*2;
+C(4,3) = dist*phi*2;
+C(4,5) = dist*phi*2;
+C(5,4) = dist*phi*2;
 ind_constraints = find(triu(C));
 
 %% init
@@ -91,7 +94,7 @@ for i = 1:50:length(t)
     dy = q(:,2,i) - q(:,2,i)';
     dz = q(:,3,i) - q(:,3,i)';
     r=sqrt(dx.^2 + dy.^2 + dz.^2);
-    error(i) = r(ind_constraints) - C(ind_constraints);
+    error(i) = sum(r(ind_constraints) - C(ind_constraints));
     % annotate time
     %text(0.85,0.95,sprintf("t = %.4f ns",t(i)/1e-9),'Units','normalized')
     %xlim([min(q(:,1,:),[],'all') max(q(:,1,:),[],'all')])
@@ -101,6 +104,7 @@ for i = 1:50:length(t)
     %clf
 end
 
+plot(t,error)
 %% Functions
 
 function [G,r2] = constraints(q,lambda)

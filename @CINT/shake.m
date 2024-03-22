@@ -33,8 +33,8 @@ for i = 3:NT
     q_tilde = 2*q(:,:,i-1) - q(:,:,i-2) - dt^2 * dTdq(q(:,:,i-1))./m;
     q_prec = q(:,:,i-1);
 
-    opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-18,...
-        "FunctionTolerance",1e-18);
+    opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-36,...
+        "FunctionTolerance",1e-36);
     [unk,iszeros] = fsolve(@(unk) sysEB(unk,NP,q_tilde,q_prec,G,C,m,ind_constraints,dt),unk, opt);
 
     lambda = zeros(NP,NP);
