@@ -3,8 +3,8 @@ int = INT;
 
 %% constants
 kb = 1.380658e-23;
-epsij = 119.8*kb; % J
-sigmaij = 0.341*1e-9; % m
+epsij = 119.8*kb/(1.66e-27); % J
+sigmaij = 0.341; % m
 
 %% icosahedron 12 vertici esterni, 13 considerando anche l'atomo centrale
 phi = (1+sqrt(5))/2;            % sezione aurea
@@ -26,7 +26,7 @@ Na = length(qx0);
 r = 1 + 0.01.*randn(Na,3);
 q0 = q0sim.*r;
 
-m = 66.34e-27*ones(1,Na)'; % Kg
+m = 66.34/1.66*ones(1,Na)'; % Da
 % px0 = zeros(1,Na); % nm/ns
 % py0 = zeros(1,Na); % nm/ns
 % pz0 = zeros(1,Na); % nm/ns
@@ -40,7 +40,7 @@ dKdp = @(p) p./m;
 F = @(q) LennardJonesForce(q, sigmaij, epsij);
 
 %% init
-t = 0:20e-15:0.5e-9;
+t = 0:20e-6:0.5;
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -51,19 +51,19 @@ t = 0:20e-15:0.5e-9;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 1:length(t)
-    T(i) = sum(m.*( sum( (p(:,:,i)./m).^2 ,2) )) /Na/2/kb;
-    E(i) = Energy(q(:,:,i), p(:,:,i), m, sigmaij, epsij);
+    T(i) = sum(m.*( sum( (p(:,:,i)./m).^2 ,2) )) /Na/2/kb*(1.66e-27);
+    E(i) = Energy(q(:,:,i), p(:,:,i), m, sigmaij, epsij)*(1.66e-27);
 end
 
 %%
 figure(1)
-plot(t/1e-9,T-mean(T),"LineWidth",1.4)
+plot(t,T-mean(T),"LineWidth",1.4)
 xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
 ylabel("T [K]","FontSize",11,"FontWeight","bold")
 
 %%
 figure(2)
-plot(t/1e-9,(E-mean(E))/kb,"LineWidth",1.4)
+plot(t,(E-mean(E))/kb,"LineWidth",1.4)
 xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
 ylabel("(E - E_0)/k_b [K]","FontSize",11,"FontWeight","bold")
 
@@ -81,7 +81,7 @@ for i = 1:length(t)
     tetramesh(DT,'faceAlpha',0,'lineStyle','--')
     scatter3(DT.Points(:,1),DT.Points(:,2),DT.Points(:,3),80,'filled')
     % annotate time
-    text(0.85,0.95,sprintf("t = %.4f ns",t(i)/1e-9),'Units','normalized')
+    text(0.85,0.95,sprintf("t = %.4f ns",t(i)),'Units','normalized')
     xlim([min(q(:,1,:),[],'all') max(q(:,1,:),[],'all')])
     ylim([min(q(:,2,:),[],'all') max(q(:,2,:),[],'all')])
     view(3)

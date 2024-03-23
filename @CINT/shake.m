@@ -4,6 +4,7 @@ function q = shake(q0,p0,dTdq,dKdp,G,C,m,t)
 NT = numel(t);
 
 ind_constraints = find(triu(C));
+constraintsEqZero = C == 0;
 
 q = zeros(NP,ND,NT);
 p = zeros(NP,ND,NT);
@@ -14,7 +15,7 @@ p(:,:,1) = p0;
 %Force tmp
 
 %Ftmp ha dimensioni [NP,ND] e Ftmp(i,j) rappresenta la componente j sulla particella i
-Ftmp = - dTdq(q0);
+Ftmp = - dTdq(q0, constraintsEqZero);
 i = 2;
 dt = t(i) - t(i-1);
 
@@ -30,12 +31,15 @@ for i = 3:NT
     dt = t(i) - t(i-1);
 
     % position
-    q_tilde = 2*q(:,:,i-1) - q(:,:,i-2) - dt^2 * dTdq(q(:,:,i-1))./m;
+    q_tilde = 2*q(:,:,i-1) - q(:,:,i-2) - dt^2 * dTdq(q(:,:,i-1), constraintsEqZero)./m;
     q_prec = q(:,:,i-1);
 
     opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-36,...
         "FunctionTolerance",1e-36);
     [unk,iszeros] = fsolve(@(unk) sysEB(unk,NP,q_tilde,q_prec,G,C,m,ind_constraints,dt),unk, opt);
+    if any(abs(iszeros) > 1e-8)
+        warning("CONSTRAINTS NOT RESPECTED")
+    end
 
     lambda = zeros(NP,NP);
     lambda(ind_constraints) = unk;

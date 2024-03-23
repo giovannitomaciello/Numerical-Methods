@@ -36,7 +36,7 @@ p0 = [px0', py0', pz0']; % nm/ns
 
 %% Forces
 dKdp = @(p) p./m;
-F = @(q) LennardJonesForce(q, sigmaij, epsij);
+F = @(q, constraintsEqZero) LennardJonesForceConstrained(q, sigmaij, epsij, constraintsEqZero);
 G = @(q,lambda) constraints(q,lambda);
 
 %% constraints
@@ -50,7 +50,7 @@ C(5,4) = dist*phi*2;
 ind_constraints = find(triu(C));
 
 %% init
-t = 0:1e-4:0.5;
+t = 0:1e-6:0.5;
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -121,30 +121,30 @@ function [G,r2] = constraints(q,lambda)
     G(:,3) = sum(dzC,2);
 end
 
-function F = LennardJonesForce(q, sigmaij, epsij)
-    n = length(q);
-    F = zeros(n,3);
+function F = LennardJonesForceConstrained(q, sigmaij, epsij, constraintsEqZero)
+n = length(q);
+F = zeros(n,3);
 
-    % calculate distance
-    dx = q(:,1) - q(:,1)';
-    dy = q(:,2) - q(:,2)';
-    dz = q(:,3) - q(:,3)';
-    r2 = dx.^2 + dy.^2 + dz.^2 + eye(n);
+% calculate distance
+dx = q(:,1) - q(:,1)';
+dy = q(:,2) - q(:,2)';
+dz = q(:,3) - q(:,3)';
+r2 = dx.^2 + dy.^2 + dz.^2 + eye(n);
 
-    % calculate sigma2 - 6
-    sigma2 = (sigmaij^2)./r2;
-    sigma6 = sigma2.*sigma2.*sigma2;
+% calculate sigma2 - 6
+sigma2 = (sigmaij^2)./r2;
+sigma6 = sigma2.*sigma2.*sigma2;
 
-    % calculate force
-    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2;
-    Fx = -Fmat.*dx;
-    Fy = -Fmat.*dy;
-    Fz = -Fmat.*dz;
+% calculate force
+Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2;
+Fx = -Fmat.*dx.*constraintsEqZero;
+Fy = -Fmat.*dy.*constraintsEqZero;
+Fz = -Fmat.*dz.*constraintsEqZero;
 
-    % sum forces
-    F(:,1) = sum(Fx,2);
-    F(:,2) = sum(Fy,2);
-    F(:,3) = sum(Fz,2);
+% sum forces
+F(:,1) = sum(Fx,2);
+F(:,2) = sum(Fy,2);
+F(:,3) = sum(Fz,2);
 end
 
 function E = Energy(q, p, m, sigmaij, epsij)
