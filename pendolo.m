@@ -7,7 +7,7 @@ cint = CINT;
 
 m = [1 .2]';% .1 .05 0.025 0.0125]';
 NP = length(m);
-k = [100 1];% 100 100 100 100];
+k = [100 100];% 100 100 100 100];
 l = [1 1];% 1 1 0.5 0.5];
 ND = 3;
 g = [0 -9.81 0];
@@ -24,7 +24,7 @@ dTdq = @(q) [dTdqi(q,1) dTdqi(q,2) dTdqi(q,3)];
 G = @(q,lambda) constraints(q,lambda);
 
 %init
-q0 = [sqrt(2)/2 0 sqrt(2)/2; 2 0 0];%; 3 0 0; 4 0 0; 4.5 0 0; 5 0 0];
+q0 = [1 0 0; 2 0 0];%; 3 0 0; 4 0 0; 4.5 0 0; 5 0 0];
 p0 = [0 0 0; 0 0 0];%; 0 0 0; 0 0 0; 0 0 0; 0 0 0];
 t = 0:0.001:1;
 C = sparse(NP);
@@ -37,8 +37,7 @@ C(1,2) = 1; C(2,1) = 1;
 %[q p] = int.euleroavanti(q0,p0,dTdq,dKdp,t);
 %[q p] = int.crankNick(q0,p0,dTdq,dKdp,t);
 %[q p] = int.posVerlet(q0,p0,dTdq,dKdp,m,t);
-%[q, p] = int.symplecticEuler(q0,p0,dTdq,dKdp,t);
-q = cint.shake(q0,p0,dTdq,dKdp,G,C,m,t);
+[q, p] = int.symplecticEuler(q0,p0,dTdq,dKdp,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % for i = 1:length(t)
@@ -63,7 +62,7 @@ q = cint.shake(q0,p0,dTdq,dKdp,G,C,m,t);
 figure
 for i = 1:1:length(t)
     % plot
-    plot([0;q(:,1,i)],[0;q(:,3,i)],'r-o','MarkerSize',10,'MarkerFaceColor','r')
+    plot([0;q(:,1,i)],[0;q(:,2,i)],'r-o','MarkerSize',10,'MarkerFaceColor','r')
     xlim([-5.5 5.5])
     ylim([-5.5 5.5])
     dist = vecnorm(q(1,:,i) - q(2,:,i)) - 1;

@@ -34,10 +34,10 @@ for i = 3:NT
     q_tilde = 2*q(:,:,i-1) - q(:,:,i-2) - dt^2 * dTdq(q(:,:,i-1), constraintsEqZero)./m;
     q_prec = q(:,:,i-1);
 
-    opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-36,...
-        "FunctionTolerance",1e-36);
+    opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-40,...
+        "FunctionTolerance",1e-40);
     [unk,iszeros] = fsolve(@(unk) sysEB(unk,NP,q_tilde,q_prec,G,C,m,ind_constraints,dt),unk, opt);
-    if any(abs(iszeros) > 1e-8)
+    if any(abs(iszeros) > 1e-10)
         warning("CONSTRAINTS NOT RESPECTED")
     end
 
@@ -45,9 +45,9 @@ for i = 3:NT
     lambda(ind_constraints) = unk;
     lambda =lambda+lambda';
 
-    [Gq,r2] = G(q_prec,lambda);
+    [Gq,~] = G(q_prec,lambda);
 
-    q(:,:,i)=q_tilde-dt^2*Gq./m;
+    q(:,:,i) = q_tilde - dt^2 * Gq./m;
 
 end
 end
@@ -59,13 +59,13 @@ function toZero = sysEB(unk,NP,q_tilde,q_prec,G,C,m,ind_constraints,dt)
         lambda =lambda+lambda';
 
         [Gq,~] = G(q_prec,lambda);
-        q = q_tilde-dt^2*Gq./m;
+        q = q_tilde - dt^2 * Gq./m;
 
         dx = q(:,1) - q(:,1)';
         dy = q(:,2) - q(:,2)';
         dz = q(:,3) - q(:,3)';
         r = dx.^2 + dy.^2 + dz.^2; 
        
-        toZero = (r(ind_constraints) - C(ind_constraints).^2);
+        toZero = r(ind_constraints) - C(ind_constraints).^2;
 
 end
