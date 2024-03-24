@@ -4,8 +4,8 @@ cint = CINT;
 
 %% constants
 kb = 1.380658e-23;
-epsij = 119.8*kb/(1.66e-27); % J
-sigmaij = 0.341; % m
+epsij = 119.8*kb/(1.66e-27); 
+sigmaij = 0.341; % nm
 
 %% icosahedron 12 vertici esterni, 13 considerando anche l'atomo centrale
 phi = (1+sqrt(5))/2;            % sezione aurea
@@ -28,7 +28,7 @@ Na = length(qx0);
 r = 1;% + 0.01.*randn(Na,3);
 q0 = q0sim.*r;
 
-m = 66.34/1.66*ones(1,Na)'; % Kg
+m = 66.34/1.66*ones(1,Na)'; % Da
 px0 = zeros(1,Na); % nm/ns
 py0 = zeros(1,Na); % nm/ns
 pz0 = zeros(1,Na); % nm/ns
@@ -36,7 +36,7 @@ p0 = [px0', py0', pz0']; % nm/ns
 
 %% Forces
 dKdp = @(p) p./m;
-F = @(q, constraintsEqZero) LennardJonesForceConstrained(q, sigmaij, epsij, constraintsEqZero);
+F = @(q) LennardJonesForceConstrained(q, sigmaij, epsij);
 G = @(q,lambda) constraints(q,lambda);
 
 %% constraints
@@ -50,7 +50,7 @@ C(5,4) = dist*phi*2;
 ind_constraints = find(triu(C));
 
 %% init
-t = 0:1e-6:0.5;
+t = 0:1e-4:0.5;
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -58,8 +58,8 @@ t = 0:1e-6:0.5;
 %[q p] = int.euleroavanti(q0,p0,F,dKdp,t);
 %[q p] = int.euleroindietro(q0,p0,F,dKdp,t);
 %[q p] = int.crankNick(q0,p0,F,dKdp,t);
-%[q p] = cint. rattle(q0,p0,F,dKdp,G,C,t);
-q = cint.shake(q0,p0,F,dKdp,G,C,m,t);
+[q p] = rattle2(q0,p0,F,dKdp,G,C,m,t);
+%q = cint.shake(q0,p0,F,dKdp,G,C,m,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % for i = 1:length(t)
@@ -121,7 +121,7 @@ function [G,r2] = constraints(q,lambda)
     G(:,3) = sum(dzC,2);
 end
 
-function F = LennardJonesForceConstrained(q, sigmaij, epsij, constraintsEqZero)
+function F = LennardJonesForceConstrained(q, sigmaij, epsij)
 n = length(q);
 F = zeros(n,3);
 
@@ -137,9 +137,9 @@ sigma6 = sigma2.*sigma2.*sigma2;
 
 % calculate force
 Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2;
-Fx = -Fmat.*dx.*constraintsEqZero;
-Fy = -Fmat.*dy.*constraintsEqZero;
-Fz = -Fmat.*dz.*constraintsEqZero;
+Fx = -Fmat.*dx;
+Fy = -Fmat.*dy;
+Fz = -Fmat.*dz;
 
 % sum forces
 F(:,1) = sum(Fx,2);
