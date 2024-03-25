@@ -25,7 +25,10 @@ ptmp = Ftmp*dt/2 + p(:,:,i-1);
 % position
 q(:,:,i) = dKdp(ptmp)*dt + q(:,:,i-1);
 
-unk = C(ind_constraints);
+unk = 0*C(ind_constraints);
+opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-20,...
+        "FunctionTolerance",1e-20,"FiniteDifferenceType","central","StepTolerance",1e-15);
+
 for i = 3:NT
     % time step
     dt = t(i) - t(i-1);
@@ -34,11 +37,9 @@ for i = 3:NT
     q_tilde = 2*q(:,:,i-1) - q(:,:,i-2) - dt^2 * dTdq(q(:,:,i-1), constraintsEqZero)./m;
     q_prec = q(:,:,i-1);
 
-    opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-40,...
-        "FunctionTolerance",1e-40);
     [unk,iszeros] = fsolve(@(unk) sysEB(unk,NP,q_tilde,q_prec,G,C,m,ind_constraints,dt),unk, opt);
-    if any(abs(iszeros) > 1e-10)
-        warning("CONSTRAINTS NOT RESPECTED")
+    if any(abs(iszeros)/mean(C(ind_constraints)) > 1e-8)
+        warning(strcat("CONSTRAINTS NOT RESPECTED, value of sum(zeros) is:",strcat(num2str(sum(abs(iszeros))))))
     end
 
     lambda = zeros(NP,NP);

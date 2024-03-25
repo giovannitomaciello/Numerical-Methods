@@ -42,7 +42,7 @@ for i = 1:6
 end
 position3layer = [position3layer , ones(length(position3layer),1)*dist];
 
-q0 = [position1layer];% position2layer; position3layer];
+q0 = [position1layer; position2layer; position3layer];
 p0 = zeros(size(q0));
 
 %% constraint matrix
@@ -79,11 +79,12 @@ F = @(q, constraintsEqZero) LennardJonesForceConstrained(q, sigmaij, epsij, cons
 G = @(q,lambda) constraints(q,lambda);
 
 %% init
-t = 0:1e-8:0.0005;
+t = 0:1e-4:0.5;
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 q = cint.shake(q0,p0,F,dKdp,G,C,m,t);
+%[q p] = cint.rattle(q0,p0,F,dKdp,G,C,m,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% plot

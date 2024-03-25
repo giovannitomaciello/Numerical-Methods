@@ -5,11 +5,11 @@ close all
 int = INT;
 cint = CINT;
 
-dx = 0.125;
+dx = 0.2;
 L = 5;
 m = 1*ones(L/dx,1)/(L/dx);
 NP = length(m);
-k = [10000, ones(1,L/dx-1)];
+k = [1000, ones(1,L/dx-1)];
 l = dx*ones(1,L/dx);
 ND = 3;
 g = [0 -9.81 0];
@@ -29,7 +29,7 @@ G = @(q,lambda) constraints(q,lambda);
 %init
 q0 = [linspace(dx,L,L/dx)', zeros(NP,2)];
 p0 = zeros(NP,3);
-t = 0:0.001:5;
+t = 0:0.0001:5;
 
 %% C
 C = sparse(size(q0,1),size(q0,1));
@@ -40,26 +40,28 @@ end
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-q = cint.shake(q0,p0,dTdq,dKdp,G,C,m,t);
+%q = cint.shake(q0,p0,dTdq,dKdp,G,C,m,t);
+[q p] = cint.rattle(q0,p0,dTdq,dKdp,G,C,m,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% for i = 1:length(t)
-%     Tpl(i) = T(q(:,:,i));
-%     Kpl(i) = K(p(:,:,i));
-%     Energy(i) = T(q(:,:,i)) + K(p(:,:,i));
-% end
+%%
+for i = 1:length(t)
+    Tpl(i) = T(q(:,:,i));
+    Kpl(i) = K(p(:,:,i));
+    Energy(i) = T(q(:,:,i)) + K(p(:,:,i));
+end
 
 %%
 
-% figure
-% hold on
-% %plot(t,Energy - mean(Energy),"LineWidth",1.4)
-% %plot(t,Kpl,"LineWidth",1.4)
-% %plot(t,Tpl,"LineWidth",1.4)
-% legend(["Total Energy","Kin Energy", "Pot Energy"])
-% xlabel("Time [s]","FontSize",11,"FontWeight","bold")
-% ylabel("Energy [J]","FontSize",11,"FontWeight","bold")
-% %ylim([-22 31])
+figure
+hold on
+plot(t,Energy - mean(Energy),"LineWidth",1.4)
+plot(t,Kpl,"LineWidth",1.4)
+plot(t,Tpl,"LineWidth",1.4)
+legend(["Total Energy","Kin Energy", "Pot Energy"])
+xlabel("Time [s]","FontSize",11,"FontWeight","bold")
+ylabel("Energy [J]","FontSize",11,"FontWeight","bold")
+ylim([-22 31])
 
 %%
 for i = 1:1:length(t)
@@ -74,7 +76,7 @@ xlabel("time [s]")
 
 %%
 figure
-for i = 1:1:length(t)
+for i = 1:10:length(t)
     % plot
     plot([0;q(:,1,i)],[0;q(:,2,i)])
     xlim([-5.5 5.5])
@@ -84,7 +86,6 @@ for i = 1:1:length(t)
     drawnow
     hold off
 end
-
 
 function [G,r2] = constraints(q,lambda)
     n = size(q,1);

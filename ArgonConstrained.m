@@ -36,7 +36,7 @@ p0 = [px0', py0', pz0']; % nm/ns
 
 %% Forces
 dKdp = @(p) p./m;
-F = @(q) LennardJonesForceConstrained(q, sigmaij, epsij);
+F = @(q, constraintsEqZero) LennardJonesForceConstrained(q, sigmaij, epsij, constraintsEqZero);
 G = @(q,lambda) constraints(q,lambda);
 
 %% constraints
@@ -50,16 +50,12 @@ C(5,4) = dist*phi*2;
 ind_constraints = find(triu(C));
 
 %% init
-t = 0:1e-4:0.5;
+t = 0:0.5e-4:0.5;
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%[q p] = int.velVerlet(q0,p0,F,dKdp,t);
-%[q p] = int.euleroavanti(q0,p0,F,dKdp,t);
-%[q p] = int.euleroindietro(q0,p0,F,dKdp,t);
-%[q p] = int.crankNick(q0,p0,F,dKdp,t);
-[q p] = rattle2(q0,p0,F,dKdp,G,C,m,t);
-%q = cint.shake(q0,p0,F,dKdp,G,C,m,t);
+%[q p] = cint.rattle(q0,p0,F,dKdp,G,C,m,t);
+q = cint.shake(q0,p0,F,dKdp,G,C,m,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % for i = 1:length(t)
@@ -121,7 +117,7 @@ function [G,r2] = constraints(q,lambda)
     G(:,3) = sum(dzC,2);
 end
 
-function F = LennardJonesForceConstrained(q, sigmaij, epsij)
+function F = LennardJonesForceConstrained(q, sigmaij, epsij, constraintsEqZero)
 n = length(q);
 F = zeros(n,3);
 
@@ -137,9 +133,9 @@ sigma6 = sigma2.*sigma2.*sigma2;
 
 % calculate force
 Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2;
-Fx = -Fmat.*dx;
-Fy = -Fmat.*dy;
-Fz = -Fmat.*dz;
+Fx = -Fmat.*dx.*constraintsEqZero;
+Fy = -Fmat.*dy.*constraintsEqZero;
+Fz = -Fmat.*dz.*constraintsEqZero;
 
 % sum forces
 F(:,1) = sum(Fx,2);
