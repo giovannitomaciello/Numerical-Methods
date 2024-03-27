@@ -96,8 +96,6 @@ function [G] = constraints(q)
     G(:,1) = sum(dxC,2);
     G(:,2) = sum(dyC,2);
     G(:,3) = sum(dzC,2);
-
-    G = reshape(G,n*3,n);
 end
 
 function S = Sfunc(q,L2)

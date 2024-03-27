@@ -33,7 +33,7 @@ for i = 2:NT
     lambda1 =lambda1+lambda1';
     [G1,~] = G(q_prec,lambda1);
     ptmp = p(:,:,i-1) - dt/2*(dTdq(q(:,:,i-1), constraintsEqZero) + G1 );
-    q(:,:,i) = q_prec + dt*ptmp./m;
+    q(:,:,i) = q_prec + dt*dKdp(ptmp);
  
 
     [unk2,iszeros2] = fsolve(@(unk) sys2(unk,NP,ptmp,q(:,:,i),G,G1,ind_constraints,dt,dKdp,dTdq,constraintsEqZero),unk2,opt);

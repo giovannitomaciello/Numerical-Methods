@@ -54,8 +54,8 @@ t = 0:0.5e-4:0.5;
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%[q p] = cint.rattle(q0,p0,F,dKdp,G,C,m,t);
-q = cint.shake(q0,p0,F,dKdp,G,C,m,t);
+[q p] = cint.rattle(q0,p0,F,dKdp,G,C,m,t);
+%q = cint.shake(q0,p0,F,dKdp,G,C,m,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % for i = 1:length(t)

@@ -2,7 +2,6 @@ clear
 clc
 close all
 
-int = INT;
 
 m = [2];
 k = [10];
