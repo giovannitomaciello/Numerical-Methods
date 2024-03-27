@@ -2,7 +2,7 @@ clear
 clc
 close all
 
-dx = 0.5;
+dx = 0.5; L2 = dx^2;
 L = 5;
 m = 1*ones(L/dx,1)/(L/dx);
 NP = length(m);
@@ -13,32 +13,29 @@ g = [0 -9.81 0];
 
 K = @(p)  sum(vecnorm(p').^2/2./m');
 T = @(q) -m'*q*g' + k/2*((vecnorm(diff([zeros(1,ND);q])')-l).^2)';
+S = @(q) Sfunc(q,L2);
+
+% to stabilize sys
+constraintsEqZero = ones(NP,NP); constraintsEqZero(2:NP+1:NP*NP) = 0;
+constraintsEqZero(NP+1:NP+1:NP*NP) = 0;
 
 dKdp = @(p) p./m;
 v = ones(1,NP);
 matrice = diag(v) - diag(v(2:end),1);
-dTdqi = @(q, i, constraintsEqZero) - m*g(i) - constraintsEqZero.*matrice*(k.*(diff([0;q(:,i)]))'...
+dTdqi = @(q, i) - m*g(i) - constraintsEqZero.*matrice*(k.*(diff([0;q(:,i)]))'...
     .*(l./vecnorm(diff([zeros(1,ND);q])')-1))';
-dTdq = @(q, constraintsEqZero) [dTdqi(q,1, constraintsEqZero) dTdqi(q,2, constraintsEqZero)...
-    dTdqi(q,3, constraintsEqZero)];
-G = @(q,lambda) constraints(q,lambda);
+dTdq = @(q) [dTdqi(q,1) dTdqi(q,2) dTdqi(q,3)];
+G = @(q,lambda) constraints(q);
 
 %init
-q0 = [linspace(dx,L,L/dx)', zeros(NP,2)];
+q0 = [linspace(0,L,L/dx)', zeros(NP,2)];
 p0 = zeros(NP,3);
 t = 0:0.0001:5;
 
-%% C
-C = sparse(size(q0,1),size(q0,1));
-for i = 2:size(q0,1)
-    C(i-1,i) = dx;
-    C(i,i-1) = dx;
-end
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %q = cint.shake(q0,p0,dTdq,dKdp,G,C,m,t);
-%[q p] = cint.rattle(q0,p0,dTdq,dKdp,G,C,m,t);
 [q p] = cint.rattle(q0,p0,dTdq,dKdp,G,S,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -87,20 +84,20 @@ end
 
 function [G] = constraints(q)
     n = size(q,1);
-    G = sparse(n,3,n);
+    G = zeros(n,3,n);
     dx = q(:,1) - q(:,1)'; dxC = 2*dx;
     dy = q(:,2) - q(:,2)'; dyC = 2*dy;
     dz = q(:,3) - q(:,3)'; dzC = 2*dz;
 
     % sum
-    G(:,1) = sum(dxC,2);
-    G(:,2) = sum(dyC,2);
-    G(:,3) = sum(dzC,2);
+    G(:,1,:) = dxC;
+    G(:,2,:) = dyC;
+    G(:,3,:) = dzC;
 
     G = reshape(G,n*3,n);
 end
 
-function S = Sfunc(q,L2)
-    S(1) = sum(q(1,:).^2);
-    S(2:numel(L)) = sum(diff(q,[],1).^2,2) - L2;
+function out = Sfunc(q,L2)
+    out(1) = sum(q(1,:).^2);
+    out(2:size(q,1)) = sum(diff(q,[],1).^2,2) - L2;
 end
