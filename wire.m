@@ -2,11 +2,11 @@ clear
 clc
 close all
 
-dx = 0.5; L2 = dx^2;
+dx = 0.2; L2 = dx^2;
 L = 5;
 m = 1*ones(L/dx,1)/(L/dx);
 NP = length(m);
-k = [1000, ones(1,L/dx-1)];
+k = ones(1,L/dx);
 l = dx*ones(1,L/dx);
 ND = 3;
 g = [0 -9.81 0];
@@ -28,9 +28,9 @@ dTdq = @(q) [dTdqi(q,1) dTdqi(q,2) dTdqi(q,3)];
 G = @(q,lambda) constraints(q);
 
 %init
-q0 = [linspace(0,L,L/dx)', zeros(NP,2)];
+q0 = [linspace(dx,L,L/dx)', zeros(NP,2)];
 p0 = zeros(NP,3);
-t = 0:0.0001:5;
+t = 0:0.001:3;
 
 
 %!!! CHOOSE A METHOD !!!%

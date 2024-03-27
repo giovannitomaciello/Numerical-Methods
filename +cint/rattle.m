@@ -12,8 +12,8 @@ p(:,:,1) = p0;
 S0 = S(q0); NC = numel(S0);
 unk1 = zeros(NC,1); unk2 = unk1;
 
-opt = optimoptions("fsolve","Display","final-detailed");%,"OptimalityTolerance",1e-20,...
-        %"FunctionTolerance",1e-20,"FiniteDifferenceType","central","StepTolerance",1e-15);
+opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-20,...
+        "FunctionTolerance",1e-20,"FiniteDifferenceType","central","StepTolerance",1e-18);
 
 for i = 2:NT
     % time step
@@ -27,10 +27,10 @@ for i = 2:NT
     end
 
     % @q0
-    Gq0 = G(q0)*lambda;
+    Gq0 = reshape(G(q0)*lambda,[],3);
     F = Gq0 - dTdq(q0); 
     ptmp = p0 + dt/2*F;
-    q(:,:,i) = q0 + dt*dKdq(ptmp);
+    q(:,:,i) = q0 + dt*dKdp(ptmp);
  
     % @q
     F = Gq0 - dTdq(q(:,:,i)); 
@@ -40,7 +40,7 @@ for i = 2:NT
         warning(strcat("CONSTRAINTS NOT RESPECTED, value of sum(zeros) in SYS2 is:",strcat(num2str(sum(abs(iszeros2))))))
     end
 
-    Frv = Gq*mu + F;   
+    Frv = reshape(G(q(:,:,i))*mu,[],3) + F;   
     p(:,:,i) = ptmp + dt/2 * Frv;
 end
 end
@@ -55,8 +55,8 @@ function toZero = sys1(lambda,p0,q0,Gq0,S,dt,dTdq0,dKdp)
 end
 
 function toZero = sys2(mu,ptmp,Gq,F,dt,dKdp)
-        Frv = Gq*mu + F;   
+        Frv = reshape(Gq*mu,[],3) + F;   
         p = ptmp + dt/2 * Frv;
                
-        toZero = Gq*dKdp(p);
+        toZero = sum(sum(reshape(Gq*dKdp(p),[],size(p,2),3),3),2);
 end
