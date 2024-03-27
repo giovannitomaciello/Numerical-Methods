@@ -22,8 +22,8 @@ constraintsEqZero(NP+1:NP+1:NP*NP) = 0;
 dKdp = @(p) p./m;
 v = ones(1,NP);
 matrice = diag(v) - diag(v(2:end),1);
-dTdqi = @(q, i) - m*g(i) - constraintsEqZero.*matrice*(k.*(diff([0;q(:,i)]))'...
-    .*(l./vecnorm(diff([zeros(1,ND);q])')-1))';
+dTdqi = @(q, i) - m*g(i) - constraintsEqZero.*matrice*(k.*(diff(q))'...
+    .*(l./vecnorm(diff(q)')-1))';
 dTdq = @(q) [dTdqi(q,1) dTdqi(q,2) dTdqi(q,3)];
 G = @(q,lambda) constraints(q);
 
@@ -98,5 +98,5 @@ function [G] = constraints(q)
 end
 
 function out = Sfunc(q,L2)
-    out(1:size(q,1)) = sum(diff([0,0,0;q],[],1).^2,2) - L2;
+    out(1:size(q,1)-1) = sum(diff([0 0 0;q],[],1).^2,2) - L2;
 end
