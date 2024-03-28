@@ -57,6 +57,8 @@ end
 function toZero = sys2(mu,ptmp,Gq,F,dt,dKdp)
         Frv = reshape(Gq*mu,[],3) + F;   
         p = ptmp + dt/2 * Frv;
+
+        
                
-        toZero = sum(sum(reshape(Gq*dKdp(p),[],size(p,2),3),3),2);
+        toZero = sum(sum(reshape(Gq,[],size(p,1),3).*reshape(dKdp(p),size(p,1),1,3) - reshape(dKdp(p)',1,size(p,1),3),2),3);
 end
