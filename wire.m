@@ -16,13 +16,13 @@ T = @(q) -m'*q*g' + k/2*((vecnorm(diff([zeros(1,ND);q])')-l).^2)';
 S = @(q) Sfunc(q,L2);
 
 % to stabilize sys
-constraintsEqZero = ones(NP,NP); constraintsEqZero(2:NP+1:NP*NP) = 0;
-constraintsEqZero(NP+1:NP+1:NP*NP) = 0;
+ constraintsEqZero = ones(NP,NP); constraintsEqZero(2:NP+1:NP*NP) = 0;
+ constraintsEqZero(NP+1:NP+1:NP*NP) = 0;
 
 dKdp = @(p) p./m;
 v = ones(1,NP);
 matrice = diag(v) - diag(v(2:end),1);
-dTdqi = @(q, i) - m*g(i) - constraintsEqZero.*matrice*(k.*(diff([0;q(:,i)]))'...
+dTdqi = @(q, i) - m*g(i) - matrice*(k.*(diff([0;q(:,i)]))'...
     .*(l./vecnorm(diff([zeros(1,ND);q])')-1))';
 dTdq = @(q) [dTdqi(q,1) dTdqi(q,2) dTdqi(q,3)];
 G = @(q) constraints(q);
@@ -31,12 +31,12 @@ dGdt = @(G,dKdp) derivative_constraints(G,dKdp);
 %init
 q0 = [linspace(dx,L,L/dx)', zeros(NP,2)];
 p0 = zeros(NP,3);
-t = 0:0.0001:3;
+t = 0:0.001:3;
 
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%q = cint.shake(q0,p0,dTdq,dKdp,G,C,m,t);
+%[q p] = cint.shake(q0,p0,dTdq,dKdp,G,S,t,m);
 [q p] = cint.rattle(q0,p0,dTdq,dKdp,G,S,t,dGdt);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
