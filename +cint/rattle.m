@@ -1,4 +1,4 @@
-function [q,p] = rattle(q0,p0,dTdq,dKdp,G,S,t)
+function [q,p] = rattle(q0,p0,dTdq,dKdp,G,S,t,dGdt)
 
 [NP, ND] = size(q0);
 NT = numel(t);
@@ -35,7 +35,7 @@ for i = 2:NT
     % @q
     F = Gq0 - dTdq(q(:,:,i)); 
 
-    [mu,iszeros2] = fsolve(@(X) sys2(X,ptmp,G(q(:,:,i)),F,dt,dKdp),unk2,opt);
+    [mu,iszeros2] = fsolve(@(X) sys2(X,ptmp,G(q(:,:,i)),F,dt,dKdp,dGdt),unk2,opt);
     if any(abs(iszeros2) > 1e-8)
         warning(strcat("CONSTRAINTS NOT RESPECTED, value of sum(zeros) in SYS2 is:",strcat(num2str(sum(abs(iszeros2))))))
     end
@@ -54,11 +54,9 @@ function toZero = sys1(lambda,p0,q0,Gq0,S,dt,dTdq0,dKdp)
         toZero = S(q);
 end
 
-function toZero = sys2(mu,ptmp,Gq,F,dt,dKdp)
+function toZero = sys2(mu,ptmp,Gq,F,dt,dKdp,dGdt)
         Frv = reshape(Gq*mu,[],3) + F;   
         p = ptmp + dt/2 * Frv;
 
-        
-               
-        toZero = sum(sum(reshape(Gq,[],size(p,1),3).*reshape(dKdp(p),size(p,1),1,3) - reshape(dKdp(p)',1,size(p,1),3),2),3);
+        toZero = sum( reshape( sum(dGdt(Gq,dKdp(p)),2) ,[],3) , 2);
 end

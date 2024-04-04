@@ -10,7 +10,7 @@ HHdist = 0.96*sind(HOangle/2)*2;
 sigmaij = 2.725;
 dist = sigmaij*2^(1/6)/2;
 kb = 1.380658e-23;
-epsij = 355.8060*kb/(1.66e-27); % J
+epsij = 355.8060*kb/(1.66e-27)/50000; % J
 
 %% 3D water molecules
 positionNoRot = [0 HOdist*cosd(HOangle/2); -HOdist*sind(HOangle/2) 0; HOdist*sind(HOangle/2) 0];
@@ -79,7 +79,7 @@ F = @(q, constraintsEqZero) LennardJonesForceConstrained(q, sigmaij, epsij, cons
 G = @(q,lambda) constraints(q,lambda);
 
 %% init
-t = 0:1e-4:0.5;
+t = 0:1e-4:0.05;
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
