@@ -1,16 +1,19 @@
 function [q,p] = rattle(q0,p0,dTdq,dKdp,G,S,t,dGdt)
 
-[NP, ND] = size(q0);
+q0 = q0(:);
+p0 = p0(:);
+
+N = numel(q0);
 NT = numel(t);
 
-q = zeros(NP,ND,NT);
-p = zeros(NP,ND,NT);
+q = zeros(N,NT);
+p = zeros(N,NT);
 
-q(:,:,1) = q0;
-p(:,:,1) = p0;
+q(:,1) = q0;
+p(:,1) = p0;
 
 S0 = S(q0); NC = numel(S0);
-unk1 = zeros(NC,1); unk2 = unk1;
+unk1 = zeros(NC+N,1); unk2 = zeros(NC,1);
 
 opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-20,...
         "FunctionTolerance",1e-20,"FiniteDifferenceType","central","StepTolerance",1e-18);
@@ -19,44 +22,51 @@ for i = 2:NT
     % time step
     dt = t(i) - t(i-1);
     
-    p0 = p(:,:,i-1);
-    q0 = q(:,:,i-1);
-    [lambda,iszeros1] = fsolve(@(X) sys1(X,p0,q0,G(q0),S,dt,dTdq(q0),dKdp),unk1,opt);
-    if any(abs(iszeros1) > 1e-8)
-        warning(strcat("CONSTRAINTS NOT RESPECTED, value of sum(zeros) in SYS1 is:",strcat(num2str(sum(abs(iszeros1))))))
-    end
+    p0 = p(:,i-1);
+    q0 = q(:,i-1);
+    dTdq0 = dTdq(q0);
 
-    % @q0
-    Gq0 = reshape(G(q0)*lambda,[],3);
-    F = Gq0 - dTdq(q0); 
+    [lambda_q,iszeros1] = fsolve(@(X) sys1(X,p0,q0,G,S,dt,dTdq0,dKdp),unk1,opt);
+    if any(abs(iszeros1) > 1e-8)
+        warning(strcat("CONSTRAINTS NOT RESPECTED, value of sum(zeros) in SYS1 is:",num2str(sum(abs(iszeros1)))," time =",num2str(t(i))))
+    end
+    
+    q(:,i) = lambda_q(1:numel(q0));
+    lambda = lambda_q(numel(q0)+1:end);
+    Gq = G(q(:,i))*lambda;
+    F = Gq - dTdq0; 
     ptmp = p0 + dt/2*F;
-    q(:,:,i) = q0 + dt*dKdp(ptmp);
  
     % @q
-    F = Gq0 - dTdq(q(:,:,i)); 
+    F =  G(q(:,i))*lambda - dTdq(q(:,i)); 
 
-    [mu,iszeros2] = fsolve(@(X) sys2(X,ptmp,G(q(:,:,i)),F,dt,dKdp,dGdt),unk2,opt);
+    [mu,iszeros2] = fsolve(@(X) sys2(X,ptmp,G(q(:,i)),F,dt,dKdp,dGdt),unk2,opt);
     if any(abs(iszeros2) > 1e-8)
         warning(strcat("CONSTRAINTS NOT RESPECTED, value of sum(zeros) in SYS2 is:",strcat(num2str(sum(abs(iszeros2))))))
     end
 
-    Frv = reshape(G(q(:,:,i))*mu,[],3) + F;   
-    p(:,:,i) = ptmp + dt/2 * Frv;
+    Frv = G(q(:,i))*mu + F;   
+    p(:,i) = ptmp + dt/2 * Frv;
 end
 end
 
-function toZero = sys1(lambda,p0,q0,Gq0,S,dt,dTdq0,dKdp)
-        Gq = reshape(Gq0*lambda,[],3);
+function toZero = sys1(lambda_q,p0,q0,G,S,dt,dTdq0,dKdp)
+        
+       q = lambda_q(1:numel(q0));
+       lambda = lambda_q(numel(q0)+1:end);
+
+        Gq = G(q)*lambda;
         F = Gq - dTdq0; 
         ptmp = p0 + dt/2*F;
-        q = q0 + dt*dKdp(ptmp);
-
-        toZero = S(q);
+        toZero = q0 + dt*dKdp(ptmp)-q;
+ 
+        toZero = [toZero;S(q)];
+        
 end
 
 function toZero = sys2(mu,ptmp,Gq,F,dt,dKdp,dGdt)
-        Frv = reshape(Gq*mu,[],3) + F;   
+        Frv = Gq*mu + F;   
         p = ptmp + dt/2 * Frv;
 
-        toZero = sum( reshape( sum(dGdt(Gq,dKdp(p)),2) ,[],3) , 2);
+        toZero = sum(  sum(dGdt(Gq,dKdp(p))) );
 end

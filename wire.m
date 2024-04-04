@@ -31,7 +31,7 @@ dGdt = @(G,dKdp) derivative_constraints(G,dKdp);
 %init
 q0 = [linspace(dx,L,L/dx)', zeros(NP,2)];
 p0 = zeros(NP,3);
-t = 0:0.001:3;
+t = 0:0.001:0.25;
 
 
 %!!! CHOOSE A METHOD !!!%
@@ -113,5 +113,7 @@ function dGdt = derivative_constraints(G,dKdp)
 end
 
 function out = Sfunc(q,L2)
-    out(1:size(q,1)) = sum(diff([0,0,0;q]).^2,2) - L2;
+    %out(1:size(q,1)) = sum(diff([0,0,0;q]).^2,2)-L2;
+    out(1:size(q,1)) = zeros();
+
 end
