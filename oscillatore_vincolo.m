@@ -91,7 +91,7 @@ function dGdt = derivative_constraints(G,dKdp)
     dGdt(:,3,:) = dz;
 
     dGdt = reshape(dGdt,n*3,n);
-    dGdt = dGdt.*G;
+    dGdt = dGdt.*G';
     dGdt = dGdt(:);
 end
 function out = Sfunc(q)

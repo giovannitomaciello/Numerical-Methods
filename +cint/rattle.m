@@ -13,7 +13,7 @@ q(:,1) = q0;
 p(:,1) = p0;
 
 S0 = S(q0); NC = numel(S0);
-unk1 = zeros(NC+N,1); unk2 = zeros(NC,1);
+unk2 = zeros(NC,1);
 
 opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-20,...
         "FunctionTolerance",1e-20,"FiniteDifferenceType","central","StepTolerance",1e-18);
@@ -26,7 +26,12 @@ for i = 2:NT
     q0 = q(:,i-1);
     dTdq0 = dTdq(q0);
 
-    [lambda_q,iszeros1] = fsolve(@(X) sys1(X,p0,q0,G,S,dt,dTdq0,dKdp),unk1,opt);
+    % explicit halved first try
+    F = - dTdq0;
+    ptmp = p0 + dt/2*F;
+    qtry = dKdp(ptmp)*dt/2 + q(:,i-1);
+
+    [lambda_q,iszeros1] = fsolve(@(X) sys1(X,p0,q0,G,S,dt,dTdq0,dKdp),[qtry; zeros(NC,1)],opt);
     if any(abs(iszeros1) > 1e-8)
         warning(strcat("CONSTRAINTS NOT RESPECTED, value of sum(zeros) in SYS1 is:",num2str(sum(abs(iszeros1)))," time =",num2str(t(i))))
     end
@@ -68,5 +73,5 @@ function toZero = sys2(mu,ptmp,Gq,F,dt,dKdp,dGdt)
         Frv = Gq*mu + F;   
         p = ptmp + dt/2 * Frv;
 
-        toZero = sum(  sum(dGdt(Gq,dKdp(p))) );
+        toZero = sum( dGdt(Gq,dKdp(p)) );
 end
