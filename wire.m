@@ -2,7 +2,7 @@ clear
 clc
 close all
 
-dx = 0.3; L2 = dx^2;
+dx = 0.9; L2 = dx^2;
 L = 0.9;
 m = 1*ones(L/dx+1,1)/(L/dx+1);
 NP = length(m);
@@ -24,7 +24,7 @@ v = ones(1,NP-1);
 matrice = diag(v) - diag(v(2:end),1);
 dTdqi = @(q, i) - m(2:end)*g(i);% - matrice*(k.*(diff(q((i-1)*length(q)/3+1:i/3*length(q))))'...
     %.*(l./vecnorm(diff([reshape(q,[],3)])')-1))';
-dTdq = @(q) [0; dTdqi(q,1); 0; dTdqi(q,2); 0; dTdqi(q,3)];
+dTdq = @(q) [0; dTdqi(q,1); -m(1)*g(2); dTdqi(q,2); 0; dTdqi(q,3)];
 G = @(q) constraints(q);
 dGdt = @(G,dKdp) derivative_constraints(G,dKdp);
 
@@ -87,33 +87,39 @@ end
 
 function G = constraints(q)
     q = reshape(q,[],3);
-    n = size(q,1);
-    G = zeros(n,3,n);
-    dx = q(:,1) - q(:,1)'; dxC = 2*dx;
-    dy = q(:,2) - q(:,2)'; dyC = 2*dy;
-    dz = q(:,3) - q(:,3)'; dzC = 2*dz;
+    % n = size(q,1);
+    % G = zeros(n,3,n);
+    % dx = q(:,1) - q(:,1)'; dxC = 2*dx;
+    % dy = q(:,2) - q(:,2)'; dyC = 2*dy;
+    % dz = q(:,3) - q(:,3)'; dzC = 2*dz;
+    % 
+    % % sum
+    % G(:,1,:) = dxC;
+    % G(:,2,:) = dyC;
+    % G(:,3,:) = dzC;
+    % 
+    % G = reshape(G,n*3,n);
 
-    % sum
-    G(:,1,:) = dxC;
-    G(:,2,:) = dyC;
-    G(:,3,:) = dzC;
-
-    G = reshape(G,n*3,n);
+    A = [2*q(1,:); 0*q(1,:)];
+    B = [2*(q(1,:) - q(2,:)); -2*(q(1,:) - q(2,:))];
+    G = [A(:), B(:)];
 end
+
 function dGdt = derivative_constraints(G,dKdp)
     dKdp = reshape(dKdp,[],3);
     n = size(dKdp,1);
-    dGdt = zeros(n,3,n);
-    dx = dKdp(:,1) - dKdp(:,1)'; 
-    dy = dKdp(:,2) - dKdp(:,2)'; 
-    dz = dKdp(:,3) - dKdp(:,3)'; 
+    %dGdt = zeros(n,3,n);
+    %dx = dKdp(:,1) - dKdp(:,1)'; 
+    %dy = dKdp(:,2) - dKdp(:,2)'; 
+    %dz = dKdp(:,3) - dKdp(:,3)'; 
 
-    dGdt(:,1,:) = dx;
-    dGdt(:,2,:) = dy;
-    dGdt(:,3,:) = dz;
+    %dGdt(:,1,:) = dx;
+    %dGdt(:,2,:) = dy;
+    %dGdt(:,3,:) = dz;
 
-    dGdt = reshape(dGdt,n*3,n);
-    dGdt = dGdt.*G;
+    %dGdt = reshape(dGdt,n*3,n);
+    %dGdt = dGdt.*G;
+    dGdt = G'*reshape(dKdp',[],1);
 end
 
 function out = Sfunc(q,L2)

@@ -64,7 +64,7 @@ function toZero = sys1(lambda_q,p0,q0,G,S,dt,dTdq0,dKdp)
         Gq = G(q)*lambda;
         F = Gq - dTdq0; 
         ptmp = p0 + dt/2*F;
-        toZero = q0 + dt*dKdp(ptmp)-q;
+        toZero = q0 + dt*dKdp(ptmp) - q;
  
         toZero = [toZero;S(q)];
         
