@@ -53,11 +53,12 @@ for i = 1:5:length(t)
     hold off
 end
 
+%%
 figure(2)
 hold on
-plot(t,Energy,"LineWidth",1.4)
-plot(t,Kpl,"LineWidth",1.4)
-plot(t,Tpl,"LineWidth",1.4)
+plot(t,Energy,"LineWidth",2)
+plot(t,Kpl,"LineWidth",2)
+plot(t,Tpl,"LineWidth",2)
 legend(["Total Energy","Kin Energy", "Pot Energy"])
 xlabel("Time [s]","FontSize",11,"FontWeight","bold")
 ylabel("Energy [J]","FontSize",11,"FontWeight","bold")
@@ -65,12 +66,12 @@ ylim([-22 31])
 
 %%
 for i = 1:1:length(t)
-    dist(i) = sum(vecnorm(diff([0 0 0; q(:,:,i)])') - dx)/dx;
+    dist(i) = abs(sum(vecnorm(diff([0 0 0; q(:,:,i)])') - dx)/dx)*100;
 end
 
 figure(3)
 plot(t,dist,"LineWidth",2)
-title("relative cumulative error constraints")
+title("sum relative error constraints [%]")
 xlabel("time [s]")
 xlabel("time [s]")
 
