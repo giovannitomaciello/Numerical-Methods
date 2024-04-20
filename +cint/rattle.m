@@ -10,8 +10,8 @@ q(:,:,1) = q0;
 p(:,:,1) = p0;
 
 NC = numel(S(q0));
-opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-40,...
-        "FunctionTolerance",1e-40,"FiniteDifferenceType","central","StepTolerance",1e-25);
+opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-20,...
+        "FunctionTolerance",1e-20,"FiniteDifferenceType","central","StepTolerance",1e-20);
 
 for i = 2:NT
     % time step
