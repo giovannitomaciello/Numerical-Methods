@@ -2,9 +2,6 @@ clear
 clc
 close all
 
-int = INT;
-cint = CINT;
-
 m = [1]';% .1 .05 0.025 0.0125]';
 NP = length(m);
 k = [100];% 100 100 100 100];
@@ -70,19 +67,4 @@ for i = 1:1:length(t)
     text(0.85,0.95,sprintf("t = %.2f s",t(i)),'Units','normalized')
     drawnow
     hold off
-end
-
-
-function [G,r2] = constraints(q,lambda)
-    n = size(q,1);
-    G = zeros(n,3);
-    dx = q(:,1) - q(:,1)'; dxC = 2*dx.*lambda;
-    dy = q(:,2) - q(:,2)'; dyC = 2*dy.*lambda;
-    dz = q(:,3) - q(:,3)'; dzC = 2*dz.*lambda;
-    r2 = dx.^2 + dy.^2 + dz.^2;
-
-    % sum
-    G(:,1) = sum(dxC,2);
-    G(:,2) = sum(dyC,2);
-    G(:,3) = sum(dzC,2);
 end
