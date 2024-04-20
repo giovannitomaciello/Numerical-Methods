@@ -39,7 +39,7 @@ for i = 3:NT
     q = q_tilde - dt^2 * Gq./m;
 
     q(:,:,i) = q_tilde - dt^2 * Gq./m;
-    p(:,:,i) =  p(:,:,i-1)- dTdq(q(:,:,i))*dt/2;
+    p(:,:,i) =  p(:,:,i-1)- dTdq(q(:,:,i))*dt/2;  % perchè dt/2? non dovrebbe essere dt?
 
 end
 end
