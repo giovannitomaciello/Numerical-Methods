@@ -31,12 +31,12 @@ for i = 3:NT
     q_tilde = 2*q(:,:,i-1) - q(:,:,i-2) - dt^2 * dTdq(q(:,:,i-1))./m;
     q_prec = q(:,:,i-1);
 
-    [lambda,iszeros] = fsolve(@(lambda) sysEB(lambda,G(q_prec),q_tilde,m,dt,S),unk, opt);
-    if any(abs(iszeros) > 1e-8)
-        warning(strcat("CONSTRAINTS NOT RESPECTED, value of sum(zeros) in SYS1 is:",strcat(num2str(sum(abs(iszeros))))))
+    [lambda,iszeros1] = fsolve(@(lambda) sysEB(lambda,G(q_prec),q_tilde,m,dt,S),unk, opt);
+    if any(abs(iszeros1) > 1e-8)
+        warning(strcat("CONSTRAINTS NOT RESPECTED, value of sum(zeros) in SYS1 is:",num2str(sum(abs(iszeros1)))," time =",num2str(t(i))))
     end
 
-    Gq = reshape(G(q_prec)*lambda,[],3);
+    Gq = tensorprod(G(q_prec),lambda,2,1);
     q(:,:,i) = q_tilde + dt^2 * Gq./m;
     p(:,:,i) =  p(:,:,i-1) + (-dTdq(q(:,:,i-1))+Gq)*dt;  
 
@@ -45,7 +45,7 @@ end
 
 function toZero = sysEB(lambda,Gq0,q_tilde,m,dt,S)
              
-        Gq = reshape(Gq0*lambda,[],3);
+        Gq = tensorprod(Gq0,lambda,2,1);
         q = q_tilde + dt^2 * Gq./m;
         toZero = S(q);
 

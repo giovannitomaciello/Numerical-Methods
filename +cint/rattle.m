@@ -10,8 +10,9 @@ q(:,:,1) = q0;
 p(:,:,1) = p0;
 
 NC = numel(S(q0));
-opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-20,...
-        "FunctionTolerance",1e-20,"FiniteDifferenceType","central","StepTolerance",1e-20);
+opt = optimoptions("fsolve","Display","none","OptimalityTolerance",1e-40,...
+        "FunctionTolerance",1e-40,"FiniteDifferenceType","central","StepTolerance",1e-20);
+lambda = zeros(NC,1);
 
 for i = 2:NT
     % time step
@@ -21,12 +22,12 @@ for i = 2:NT
     q0 = q(:,:,i-1);
     dTdq0 = dTdq(q0);
 
-    [lambda,iszeros1] = fsolve(@(X) sys1(X,p0,q0,G(q0),S,dt,dTdq0,dKdp),zeros(NC,1), opt);
+    [lambda,iszeros1] = fsolve(@(X) sys1(X,p0,q0,G(q0),S,dt,dTdq0,dKdp),lambda, opt);
     if any(abs(iszeros1) > 1e-8)
         warning(strcat("CONSTRAINTS NOT RESPECTED, value of sum(zeros) in SYS1 is:",num2str(sum(abs(iszeros1)))," time =",num2str(t(i))))
     end
     
-    Gq = G(q0)*lambda; Gq = reshape(Gq,[],3);
+    Gq = tensorprod(G(q0),lambda,2,1);
     F = Gq - dTdq0; 
     ptmp = p0 + dt/2*F;
     q(:,:,i) = q0 + dt*dKdp(ptmp);
@@ -35,20 +36,18 @@ for i = 2:NT
     Ftmp = - dTdq(q(:,:,i));
 
     Gqp = G(q(:,:,i));
-    Gqpx = Gqp(1:size(Gqp,1)/3,:)*(ptmp(:,1)*2/dt + Ftmp(:,1));
-    Gqpy = Gqp(size(Gqp,1)/3+1:2*size(Gqp,1)/3,:)*(ptmp(:,2)*2/dt + Ftmp(:,2));
-    Gqpz = Gqp(2*size(Gqp,1)/3+1:end,:)*(ptmp(:,3)*2/dt + Ftmp(:,3));
-    b = Gqpx + Gqpy + Gqpz;
-    A = Gqp'*Gqp;
+    vF = 2/dt*ptmp + Ftmp;
+    b = tensorprod(Gqp,vF,[1 3],[1 2]);
+    A = tensorprod(Gqp,pagetranspose(Gqp),[2 3],[2 3]);
 
-    oneOnMu = A\b; mu = 1./oneOnMu;
+    mu = A\b;
 
-    p(:,:,i) = ptmp + dt/2*Ftmp - dt/2*reshape(Gqp*mu,[],3);
+    p(:,:,i) = ptmp + dt/2*Ftmp - dt/2*tensorprod(Gqp,mu,2,1);
 end
 end
 
 function toZero = sys1(lambda,p0,q0,G0,S,dt,dTdq0,dKdp)
-        Gq = G0*lambda; Gq = reshape(Gq,[],3);
+        Gq = tensorprod(G0,lambda,2,1);
         F = Gq - dTdq0; 
         ptmp = p0 + dt/2*F;
         q = q0 + dt*dKdp(ptmp);

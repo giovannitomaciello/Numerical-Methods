@@ -2,7 +2,7 @@ clear
 clc
 close all
 
-dx = .1; L2 = dx^2;
+dx = .2; L2 = dx^2;
 L = 2;
 m = 1*ones(L/dx,1)/(L/dx);
 NP = length(m);
@@ -24,13 +24,13 @@ dGdt = @(G,dKdp) derivative_constraints(G,dKdp);
 %init
 q0 = [linspace(dx,L,L/dx)' zeros(NP,2)];
 p0 = zeros(NP,3);
-t = 0:0.001:3;
+t = 0:0.001:5;
 
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%[q p] = cint.shake(q0,p0,dTdq,dKdp,G,S,t,m);
-[q p] = cint.rattle(q0,p0,dTdq,dKdp,G,S,t);
+[q p] = cint.shake(q0,p0,dTdq,dKdp,G,S,t,m);
+%[q p] = cint.rattle(q0,p0,dTdq,dKdp,G,S,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%
@@ -80,6 +80,7 @@ function G = constraints(q)
     NP = size(q,1);
     NC = NP;
     ND = 3;
+    G = zeros(NP,NP,3);
 
     dqDiag = diff([0 0 0; q]);
     dqDiagM1 = -diff(q);
@@ -88,7 +89,9 @@ function G = constraints(q)
     dy = diag(dqDiag(:,2),0) + diag(dqDiagM1(:,2),1);
     dz = diag(dqDiag(:,3),0) + diag(dqDiagM1(:,3),1);
 
-    G = [dx; dy; dz];
+    G(:,:,1) = dx;
+    G(:,:,2) = dy;
+    G(:,:,3) = dz;
 end
 
 function out = Sfunc(q,L2)
