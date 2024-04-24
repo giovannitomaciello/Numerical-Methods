@@ -12,15 +12,19 @@ r = 20;
 x = [0 0];
 y = [-50 50];
 
-% generate random points in the circles
-theta1 = 2*pi*rand(N/2,1);
-theta2 = 2*pi*rand(N/2,1);
-r1 = r*sqrt(rand(N/2,1));
-r2 = r*sqrt(rand(N/2,1));
-x1 = x(1) + r1.*cos(theta1);
-y1 = y(1) + r1.*sin(theta1);
-x2 = x(2) + r2.*cos(theta2);
-y2 = y(2) + r2.*sin(theta2);
+%% generate particles
+grd.ncy = 100;
+grd.ncx = 40;
+grd.x = linspace (0, 250, grd.ncx+1);
+grd.y = linspace (0, 200, grd.ncy+1);
+[X1, Y1] = meshgrid (linspace (125-39/2*2^(1/6), 125+39/2*2^(1/6), 40),...
+                 linspace (120-39/2*2^(1/6), 120+39/2*2^(1/6), 40));
+[X2, Y2] = meshgrid (linspace (125-159/2*2^(1/6), 125+159/2*2^(1/6), 40),...
+                 linspace (50-39/2*2^(1/6), 50+39/2*2^(1/6), 40));
+ptcls.x = [[X1(:);X2(:)], [Y1(:);Y2(:)]]';
+ptcls.v = randn (size (ptcls.x)) * .1;
+ptcls.v(2, 1:numel(X1)) = -10;
+grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
 
 %% parameters of the simulation
 L1 = 250; % length of the domain
@@ -35,91 +39,102 @@ dt = 0.001;
 tFinal = 10;
 nTime = round(tFinal/dt);
 
-% create the meshgrid for the domain
-grd.ncy = L2/rCut;
-grd.ncx = L1/rCut;
-grd.x = linspace (0, L1, grd.ncx+1);
-grd.y = linspace (0, L2, grd.ncy+1);
-
-% initialize the particles
-ptcls.x = [[x1(:);x2(:)], [y1(:);y2(:)]]';
-ptcls.v = 0*ptcls.x + 0.01*randn(size(ptcls.x));
-% speed of the first circle
-ptcls.v(1:N/2,1) = -1;
-
-grd_to_ptcl = sint.init_ptcl_mesh(grd, ptcls);
-
 %% FUNCTIONS
 
-function F = forceCells(grd, ptcls, grd_to_ptcl, epsilon, sigma, lennardJonesForce)
-    F = zeros(size(ptcls.x,2));
-
-    % size of the grid
-    nL1 = size(grd.x,1);
-    nL2 = size(grd.x,2);
-    Ncells = nL1*nL2;
-
+function [Fvectx, Fvecty] = forceCells(Fvectx, Fvecty, grd, ptcls, grd_to_ptcl, epsij, sigmaij)
     index = cellfun(@numel, grd_to_ptcl, 'UniformOutput', true);
-    indexNonZero = find(index);
 
-    % loop over all cells
-    for i = indexNonZero(:)'
-        % nw vertex
-        if i == 1
-            adCells = [i, i+1, i+nL1, i+nL1+1, i+nL1-1];
-        % ne vertex
-        elseif i == nL1
-            adCells = [i, i-1, i+nL1, i+nL1-1, i+nL1-2];
-        % sw vertex
-        elseif i == Ncells-nL1+1
-            adCells = [i, i+1, i-nL1, i-nL1+1, i-nL1-1];
-        % se vertex
-        elseif i == Ncells
-            adCells = [i, i-1, i-nL1, i-nL1-1, i-nL1+1];
-        % n edge
-        elseif i > 1 && i < nL1
-            adCells = [i, i+1, i-1, i+nL1, i+nL1+1, i+nL1-1];
-        % s edge
-        elseif i > Ncells-nL1 && i < Ncells
-            adCells = [i, i+1, i-1, i-nL1, i-nL1+1, i-nL1-1];
-        % w edge
-        elseif mod(i-1,nL1) == 0
-            adCells = [i, i+1, i+nL1, i-nL1, i+nL1+1, i-nL1+1];
-        % e edge
-        elseif mod(i,nL1) == 0
-            adCells = [i, i-1, i+nL1, i-nL1, i+nL1-1, i-nL1-1];
-        % interior cells
-        else
-            adCells = [i, i+1, i-1, i+nL1, i-nL1, i+nL1+1, i+nL1-1, i-nL1+1, i-nL1-1];
-        end
+    nLy = numel(grd.y);
+    removeIndex = unique([1:nLy, 1:nLy:nLx*nLy, nLy:nLy:nLx*nLy, nLy*nLx-nLy+1:nLx*nLy]);
+    nonEmpty = find(index>=1);
+    nonEmpty = setdiff(nonEmpty,removeIndex);
+
+    for i = nonEmpty(:)'
+    % w-n-e-s-sw-nw-ne-su adiacent cells
+    adCells = [i-nLy, i-1, i+nLy, i+1, i-nLy+1, i-nLy-1, i+nLy-1, i+nLy+1];
+    indexPtclAd = grd_to_ptcl(adCells); indexPtclAd = horzcat(indexPtclAd{:});
+    indexPtclLocal = grd_to_ptcl(i); indexPtclLocal = horzcat(indexPtclLocal{:});
+
+    if isempty(indexPtclAd) == 1
+        continue
     end
 
-    particlesToCalc = grd_to_ptcl(adCells);
-    particlesToCalc = particlesToCalc{:};
+    % calculate pairwise distance between local particles
+    dx = ptcls.x(1,indexPtclLocal) - ptcls.x(1,indexPtclLocal)';
+    dy = ptcls.x(2,indexPtclLocal) - ptcls.x(2,indexPtclLocal)';
+    distanceMat2 = dx.^2 + dy.^2 + eye(numel(indexPtclLocal));
 
-    % calculate forces between particles
-    Flocal = F;
-    Flocal(particlesToCalc) = lennardJonesForce(ptcls.x(:,[particlesToCalc particlesToCalc+size(ptcls.x,2)/2]), sigma, epsilon);
-    F = F + Flocal;
+    % calculate pairwise force between local particles
+    [Fx, Fy] = LennardJonesForceMatrix(dx, dy, distanceMat2, sigmaij, epsij);
+    Fvectx(indexPtclLocal) = Fvectx(indexPtclLocal) + Fx;
+    Fvecty(indexPtclLocal) = Fvecty(indexPtclLocal) + Fy;
+
+    if isempty(indexPtclAd) == 1
+        continue
+    end
+    
+    % calculate pairwise distance between local and adiacent particles
+    dx = ptcls.x(1,indexPtclAd) - ptcls.x(1,indexPtclLocal)';
+    dy = ptcls.x(2,indexPtclAd) - ptcls.x(2,indexPtclLocal)';
+    distanceMat2 = dx.^2 + dy.^2;
+
+    % get pairwise inside/outside cut radius
+    fc = find(distanceMat2 < rcut2);
+    
+    if isempty(fc) == 1
+        continue
+    end
+
+    r2Local = distanceMat2(fc);
+    dx = dx(fc);
+    dy = dy(fc);
+
+    % calculate force between local and adiacent particles
+    [Fx, Fy] = lennardJonesForce(dx, dy, r2Local, sigmaij, epsij);
+    Fmatx = zeros(numel(indexPtclLocal),numel(indexPtclAd));
+    Fmaty = zeros(numel(indexPtclLocal),numel(indexPtclAd));
+
+    % indexing forces
+    Fmatx(fc) = Fx; Fx = sum(Fmatx,2);
+    Fmaty(fc) = Fy; Fy = sum(Fmaty,2);
+
+    % sum forces
+    Fvectx(indexPtclLocal) = Fvectx(indexPtclLocal) + Fx;
+    Fvecty(indexPtclLocal) = Fvecty(indexPtclLocal) + Fy;
+    end
+
+    %% internal functions
+    function [Fx, Fy] = lennardJonesForce(dx, dy, r2, sigmaij, epsij)
+        % calculate sigma2 - 6
+        sigma2 = (sigmaij^2)./r2;
+        sigma6 = sigma2.*sigma2.*sigma2;
+
+        % calculate force
+        Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2;
+        Fx = -Fmat.*dx;
+        Fy = -Fmat.*dy;
+    end
+
+    function [Fx, Fy] = LennardJonesForceMatrix(dx, dy ,r2 , sigmaij, epsij)
+        % calculate sigma2 - 6
+        sigma2 = (sigmaij^2)./r2;
+        sigma6 = sigma2.*sigma2.*sigma2;
+
+        % calculate force
+        Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2;
+        Fx = -Fmat.*dx;
+        Fy = -Fmat.*dy;
+    
+        % sum forces
+        Fx = sum(Fx,2);
+        Fy = sum(Fy,2);
+    end
 end
 
-function F = lennardJonesForce(q, sigmaij, epsij)
-    n = length(q);
-
-    % calculate distance
-    dx = q(1:n/2) - q(n/2+1:end);
-    dy = q(n/2+1:end) - q(n/2+1:end);
-    r2 = dx.^2 + dy.^2 + eye(n);
-
-    % calculate sigma2 - 6
-    sigma2 = (sigmaij^2)./r2;
-    sigma6 = sigma2.*sigma2.*sigma2;
-
-    % calculate force
-    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2;
-    Fx = -Fmat.*dx;
-    Fy = -Fmat.*dy;
-
-    % sum forces as a column vector
-    F = [sum(Fx,2); sum(Fy,2)];
+function ptcls = updateBoundaryConditions(ptcls, L1, L2)
+    % update boundary conditions
+    ptcls.x(1, ptcls.x(1,:) > L1) = ptcls.x(1, ptcls.x(1,:) > L1) - L1;
+    ptcls.x(1, ptcls.x(1,:) < 0) = ptcls.x(1, ptcls.x(1,:) < 0) + L1;
+    ptcls.x(2, ptcls.x(2,:) > L2) = ptcls.x(2, ptcls.x(2,:) > L2) - L2;
+    ptcls.x(2, ptcls.x(2,:) < 0) = ptcls.x(2, ptcls.x(2,:) < 0) + L2;
 end

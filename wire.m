@@ -42,11 +42,14 @@ end
 
 %%
 figure(1)
+minq = min(q(:));
+maxq = max(q(:));
+
 for i = 1:5:length(t)
     % plot
     plot([0; q(:,1,i)],[0; q(:,2,i)])
-    xlim([-5.5 5.5])
-    ylim([-5.5 5.5])
+    xlim([minq maxq])
+    ylim([minq maxq])
     % annotate time
     text(0.85,0.95,sprintf("t = %.2f s",t(i)),'Units','normalized')
     drawnow

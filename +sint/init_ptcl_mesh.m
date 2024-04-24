@@ -1,6 +1,7 @@
 function grd_to_ptcl = init_ptcl_mesh (grd, ptcls)
-  ridx = lookup (grd.y, ptcls.x(2, :));
-  cidx = lookup (grd.x, ptcls.x(1, :));
+  hx = grd.x(2) - grd.x(1); hy = grd.y(2) - grd.y(1); 
+  ridx = floor(ptcls.x(2, :)/hy) + 1;
+  cidx = floor(ptcls.x(1, :)/hx) + 1;
 
   ptcl_to_grd = sub2ind ([grd.ncy, grd.ncx], ridx, cidx);
   grd_to_ptcl = cell (grd.ncy,grd.ncx);
