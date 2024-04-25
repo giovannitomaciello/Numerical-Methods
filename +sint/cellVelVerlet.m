@@ -1,33 +1,45 @@
-function [q,p] = velVerlet(q0,p0,dTdq,dKdp,t)
+function [q,p] = cellVelVerlet(dTdq,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,savingStep)
 
-    [NP, ND] = size(q0);
-    
-    NT = numel(t);
-    
-    q = zeros(NP,ND,NT);
-    p = zeros(NP,ND,NT);
-    
-    q(:,:,1) = q0;
-    p(:,:,1) = p0;
-    
-    %Force tmp
+    [ND, NP] = size(ptcls.x);
+
+    q = zeros(ND,NP,nTime/savingStep);
+    p = zeros(ND,NP,nTime/savingStep);
      
-    %Ftmp ha dimensioni [NP,ND] e Ftmp(i,j) rappresenta la componente j sulla particella i  
-    Ftmp = - dTdq(q0);
-    dt = diff(t);
-    
-    for i = 2:NT
+    %Ftmp ha dimensioni [ND,NP] e Ftmp(i,j) rappresenta la componente i sulla particella j  
+    Ftmp = - dTdq(ptcls, grd_to_ptcl);
+
+    t = 0;
+
+    for i = 2:nTime
         %momentum tmp
-        ptmp = Ftmp*dt(i-1)/2 + p(:,:,i-1);
+        ptmp = Ftmp*dt/2 + ptcls.p;
        
         % position
-        q(:,:,i) = dKdp(ptmp)*dt(i-1) + q(:,:,i-1);
+        ptcls.x = dKdp(ptmp)*dt + ptcls.x;
         
-    
+        %update boundary conditions
+        ptcls = boundaryConditions(ptcls);
+
+        %recalculate the grid
+        grd_to_ptcl = sint.init_ptcl_mesh(grd, ptcls);
+
         %Force tmp
-        Ftmp = - dTdq(q(:,:,i));
+        Ftmp = - dTdq(ptcls, grd_to_ptcl);
        
         %momentum
-        p(:,:,i) = Ftmp*dt(i-1)/2 + ptmp;
+        ptcls.p = Ftmp*dt/2 + ptmp;
+
+        % saving the results
+        if mod(i,savingStep) == 0
+            q(:,:,i/savingStep) = ptcls.x;
+            p(:,:,i/savingStep) = ptcls.p;
+
+            disp("-------------------------------------")
+            % print the time
+            fprintf('Time: %f\n', t);
+            disp("-------------------------------------")
+        end
+        % save the time
+        t = t + dt;
     end
-    end
+end

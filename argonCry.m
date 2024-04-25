@@ -1,6 +1,5 @@
 clc; clear all; close all
 
-int = INT;
 
 %% atoms pos, vel, m (m m/s kg)
 qx0 = [0 0.02 0.34 0.36 -0.02 -0.35 -0.31]; % nm
