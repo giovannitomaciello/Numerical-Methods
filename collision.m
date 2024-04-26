@@ -61,14 +61,17 @@ savingStep = 1000;
 %% plot the results
 figure
 for i = 1:size(q,3)
-    scatter(q(1,1:numel(X1),i), q(2,1:numel(X1),i), 10,"red" ,'filled')
+    scatter(q(1,1:numel(X1),i), q(2,1:numel(X1),i), 5,"red" ,'filled')
     hold on
-    scatter(q(1,numel(X1)+1:end,i), q(2,numel(X1)+1:end,i), 10,"blue" ,'filled')
+    scatter(q(1,numel(X1)+1:end,i), q(2,numel(X1)+1:end,i), 5,"blue" ,'filled')
     axis([0 L1 0 L2])
+    axis equal
     xline(L1-rCut)
     xline(rCut)
     yline(L2-rCut)
     yline(rCut)
+    % annotate the time
+    text(0.8*L1,0.9*L2,sprintf("t = %.2f",i*tFinal/size(q,3)))
     drawnow
     hold off
 end
@@ -76,16 +79,19 @@ end
 %% plot the results p
 figure
 for i = 1:size(q,3)
-    scatter(q(1,:,i), q(2,:,i), 10,vecnorm(p(:,:,i)) ,'filled')
+    scatter(q(1,:,i), q(2,:,i), 5,vecnorm(p(:,:,i)) ,"filled")
     hold on
     axis([0 L1 0 L2])
     xline(L1-rCut)
     xline(rCut)
     yline(L2-rCut)
     yline(rCut)
-    axis square
+    axis equal
     colorbar
     colormap("turbo")
+    clim([0 max(p,[],"all")])
+    % annotate the time
+    text(0.8*L1,0.9*L2,sprintf("t = %.2f",i*tFinal/size(q,3)))
     drawnow
     hold off
 end
