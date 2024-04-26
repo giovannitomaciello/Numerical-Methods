@@ -4,67 +4,50 @@ clc; clear all; close all
 rng("default")
 clc; clear
 %% parameters of the simulation
-L1 = 50; % L of the domain
-L2 = 60; % H of the domain
-epsilon = 5;
-sigma = 1;
+L1 = 70; % L of the domain
+L2 = 100; % H of the domain
+epsilon = 20;
+sigma = .5;
 rCut = 2.5*sigma;
 m = 1;
-dt = 0.001;
+dt = 0.0005;
+1;
 
-%% generate particles
-% scale = 1;
-% delta = sigma*2^(1/6);
-% 
-% H1 = 50; W1 = 50;
-% 
-% H1_l = (H1-1)*delta; W1_l = (W1-1)*delta;
-% 
-% grd.ncy = L2/rCut;
-% grd.ncx = L1/rCut;
-% grd.x = linspace (0, L1, grd.ncx+1);
-% grd.y = linspace (0, L2, grd.ncy+1);
-% 
-% yc_1 = 30-20*(1-(1/scale));
-% 
-% [X1, Y1] = meshgrid (linspace ((L1-W1_l)/2, (L1+W1_l)/2, W1),...
-% 		     linspace ((yc_1)-H1_l/2, (yc_1)+H1_l/2, H1)); 
-% 
-% ptcls.x = [[X1(:) + rand(size(X1(:)))*0.1], [Y1(:) + rand(size(X1(:)))*0.1]]';
-% ptcls.p = randn (size (ptcls.x)) * .01;
-% grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
-% d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
-
-%% generate two squares colliding
+%% generate two rotating circles colliding
 scale = 1;
 delta = sigma*2^(1/6);
 
-H1 = 15; W1 = 10;
-H2 = 15; W2 = 10;
+H1 = 30; W1 = 30;
 
 H1_l = (H1-1)*delta; W1_l = (W1-1)*delta;
-H2_l = (H2-1)*delta; W2_l = (W2-1)*delta;
 
 grd.ncy = L2/rCut;
 grd.ncx = L1/rCut;
 grd.x = linspace (0, L1, grd.ncx+1);
 grd.y = linspace (0, L2, grd.ncy+1);
 
-yc_1 = 40-20*(1-(1/scale));
-yc_2 = 20-20*(1-(1/scale));
+[X, Y] = meshgrid(linspace(-H1_l/2,H1_l/2,H1),linspace(-W1_l/2,W1_l/2,W1));
 
-[X1, Y1] = meshgrid (linspace ((L1-W1_l)/2, (L1+W1_l)/2, W1),...
-             linspace ((yc_1)-H1_l/2, (yc_1)+H1_l/2, H1));
-[X2, Y2] = meshgrid (linspace ((L1-W2_l)/2, (L1+W2_l)/2, W2),...
-                linspace ((yc_2)-H2_l/2, (yc_2)+H2_l/2, H2));
+% cut particles outside the circle
+X = X(:); Y = Y(:);
+Xc = X(X.^2 + Y.^2 <= (H1_l/2)^2);
+Yc = Y(X.^2 + Y.^2 <= (H1_l/2)^2);
+
+Px = Yc*2; 
+Py = -Xc*2;
+
+% copy to first circle
+X1 = Xc + 32; Y1 = Yc-20 + 50;
+Px1 = Px; Py1 = Py+10;
+
+% copy to second circle
+X2 = Xc + 38; Y2 = Yc+20 + 50;
+Px2 = Px; Py2 = Py-10;
 
 ptcls.x = [[X1(:);X2(:)], [Y1(:);Y2(:)]]';
-ptcls.p = randn (size (ptcls.x)) * .01;
+ptcls.p = [[Px1(:);Px2(:)], [Py1(:);Py2(:)]]';
 grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
 d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
-% initialize the momentum
-ptcls.p(:,1:numel(X1)) = [0; -5]*ones(1,numel(X1));
-ptcls.p(:,numel(X1)+1:end) = [0;5]*ones(1,numel(X2));
 
 % number of time steps
 tFinal = 4;
@@ -87,6 +70,20 @@ for i = 1:size(q,3)
     scatter(q(1,1:numel(X1),i), q(2,1:numel(X1),i), 10,"red" ,'filled')
     hold on
     scatter(q(1,numel(X1)+1:end,i), q(2,numel(X1)+1:end,i), 10,"blue" ,'filled')
+    axis([0 L1 0 L2])
+    xline(L1-rCut)
+    xline(rCut)
+    yline(L2-rCut)
+    yline(rCut)
+    drawnow
+    hold off
+end
+
+%% plot the results p
+figure
+for i = 1:size(q,3)
+    scatter(q(1,:,i), q(2,:,i), 10,vecnorm(p(:,:,i)) ,'filled')
+    hold on
     axis([0 L1 0 L2])
     xline(L1-rCut)
     xline(rCut)

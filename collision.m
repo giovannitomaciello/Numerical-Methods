@@ -7,7 +7,7 @@ epsilon = 5;
 sigma = 1;
 rCut = 2.5*sigma;
 m = 1;
-dt = 0.0005;
+dt = 0.00005;
 
 %% generate particles
 scale = 1;
@@ -44,7 +44,7 @@ grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
 d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
 
 % number of time steps
-tFinal = 4;
+tFinal = 20;
 nTime = round(tFinal/dt);
 
 %% functions to pass to the integrator
@@ -54,7 +54,7 @@ ghost = @(ptcls, NP) updateGhost(ptcls, NP, L1, L2, rCut, rCut);
 dKdp = @(p) p/m;
 
 %% run the simulation
-savingStep = 100;
+savingStep = 1000;
 [q, p] = sint.cellVelVerlet(force,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
 %[q, p] = sint.cellForest(force,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
 
@@ -73,6 +73,22 @@ for i = 1:size(q,3)
     hold off
 end
 
+%% plot the results p
+figure
+for i = 1:size(q,3)
+    scatter(q(1,:,i), q(2,:,i), 10,vecnorm(p(:,:,i)) ,'filled')
+    hold on
+    axis([0 L1 0 L2])
+    xline(L1-rCut)
+    xline(rCut)
+    yline(L2-rCut)
+    yline(rCut)
+    axis square
+    colorbar
+    colormap("turbo")
+    drawnow
+    hold off
+end
 %% FUNCTIONS
 
 function F = forceCells(ptcls, grd_to_ptcl, epsij, sigmaij, rcut2)
