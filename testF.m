@@ -1,36 +1,47 @@
+clc; clear all; close all
+
 %% generate particles
 rng("default")
 clc; clear
 %% parameters of the simulation
-L1 = 20; % length of the domain
-L2 = 20; % width of the domain
+L1 = 40; % length of the domain
+L2 = 70; % width of the domain
 epsilon = 5;
 sigma = 1;
-rCut = 2.5*sigma;
+rCut = 10*sigma;
 m = 1;
-dt = 0.00001;
+dt = 0.0001;
 
-%% generate particles
+%% generate two squares colliding
 scale = 1;
 delta = sigma*2^(1/6);
 
-H1 = 10; W1 = 10;
+H1 = 4; W1 = 4;
+H2 = 4; W2 = 4;
 
 H1_l = (H1-1)*delta; W1_l = (W1-1)*delta;
+H2_l = (H2-1)*delta; W2_l = (W2-1)*delta;
 
 grd.ncy = L2/rCut;
 grd.ncx = L1/rCut;
 grd.x = linspace (0, L1, grd.ncx+1);
 grd.y = linspace (0, L2, grd.ncy+1);
 
-yc_1 = 10-20*(1-(1/scale));
+yc_1 = 50-20*(1-(1/scale));
+yc_2 = 20-20*(1-(1/scale));
 
 [X1, Y1] = meshgrid (linspace ((L1-W1_l)/2, (L1+W1_l)/2, W1),...
-		     linspace ((yc_1)-H1_l/2, (yc_1)+H1_l/2, H1)); 
+             linspace ((yc_1)-H1_l/2, (yc_1)+H1_l/2, H1));
+[X2, Y2] = meshgrid (linspace ((L1-W2_l)/2, (L1+W2_l)/2, W2),...
+                linspace ((yc_2)-H2_l/2, (yc_2)+H2_l/2, H2));
 
-ptcls.x = [[X1(:) + rand(size(X1(:)))*0.1], [Y1(:) + rand(size(X1(:)))*0.1]]';
-ptcls.p = randn (size (ptcls.x)) * .1;
+ptcls.x = [[X1(:);X2(:)], [Y1(:);Y2(:)]]';
+ptcls.p = randn (size (ptcls.x)) * .01;
 grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
+d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
+% initialize the momentum
+ptcls.p(:,1:numel(X1)) = [0; -5]*ones(1,numel(X1));
+ptcls.p(:,numel(X1)+1:end) = [0;5]*ones(1,numel(X2));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -48,7 +59,7 @@ hold on
 for jj = 1 : grd.ncx
   for ii = 1 : grd.ncy
     plot (ptcls.x(1, grd_to_ptcl{ii,jj}),...
-          ptcls.x(2, grd_to_ptcl{ii,jj}), 'x')
+          ptcls.x(2, grd_to_ptcl{ii,jj}), 'Marker','square')
     axis ([grd.x(1) grd.x(end) grd.y(1) grd.y(end)])
     pause (.1)
   end
@@ -59,7 +70,7 @@ index = cellfun(@numel, grd_to_ptcl, 'UniformOutput', true);
 Fvectx = zeros(numel(ptcls.x)/2,1);
 Fvecty = zeros(numel(ptcls.x)/2,1);
 
-[nLx, nLy] = size(grd_to_ptcl);
+[nLy, nLx] = size(grd_to_ptcl);
 removeIndex = unique([1:nLy, 1:nLy:nLx*nLy, nLy:nLy:nLx*nLy, nLy*nLx-nLy+1:nLx*nLy]);
 nonEmpty = find(index>=1);
 nonEmpty = setdiff(nonEmpty,removeIndex);
@@ -98,7 +109,8 @@ for i = nonEmpty(:)'
     [Fxv, Fyv] = lennardJonesForce(dx, dy, r2Local, sigmaij, epsij);
 
     % calc forces on localPtcls
-    fc1Offsetted = discretize(fc1,length(fc1Unique));
+    offset = min(fc1Unique) - 1;
+    fc1Offsetted = fc1 - offset;
     Fx(fc1Unique) = accumarray(fc1Offsetted(:),Fxv(:));
     Fy(fc1Unique) = accumarray(fc1Offsetted(:),Fyv(:));
 

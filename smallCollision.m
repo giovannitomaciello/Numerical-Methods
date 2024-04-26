@@ -1,20 +1,46 @@
 clc; clear all; close all
 
+%% generate particles
+rng("default")
+clc; clear
 %% parameters of the simulation
-L1 = 250; % length of the domain
-L2 = 200; % width of the domain
+L1 = 50; % L of the domain
+L2 = 60; % H of the domain
 epsilon = 5;
 sigma = 1;
 rCut = 2.5*sigma;
 m = 1;
-dt = 0.0005;
+dt = 0.001;
 
 %% generate particles
+% scale = 1;
+% delta = sigma*2^(1/6);
+% 
+% H1 = 50; W1 = 50;
+% 
+% H1_l = (H1-1)*delta; W1_l = (W1-1)*delta;
+% 
+% grd.ncy = L2/rCut;
+% grd.ncx = L1/rCut;
+% grd.x = linspace (0, L1, grd.ncx+1);
+% grd.y = linspace (0, L2, grd.ncy+1);
+% 
+% yc_1 = 30-20*(1-(1/scale));
+% 
+% [X1, Y1] = meshgrid (linspace ((L1-W1_l)/2, (L1+W1_l)/2, W1),...
+% 		     linspace ((yc_1)-H1_l/2, (yc_1)+H1_l/2, H1)); 
+% 
+% ptcls.x = [[X1(:) + rand(size(X1(:)))*0.1], [Y1(:) + rand(size(X1(:)))*0.1]]';
+% ptcls.p = randn (size (ptcls.x)) * .01;
+% grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
+% d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
+
+%% generate two squares colliding
 scale = 1;
 delta = sigma*2^(1/6);
 
-H1 = 40; H2 = 40;
-W1 = 40; W2 = 160;
+H1 = 15; W1 = 10;
+H2 = 15; W2 = 10;
 
 H1_l = (H1-1)*delta; W1_l = (W1-1)*delta;
 H2_l = (H2-1)*delta; W2_l = (W2-1)*delta;
@@ -24,24 +50,21 @@ grd.ncx = L1/rCut;
 grd.x = linspace (0, L1, grd.ncx+1);
 grd.y = linspace (0, L2, grd.ncy+1);
 
-Dist = 5;
-yc_1 = 120-20*(1-(1/scale));
-yc_2 = 80-Dist+20*(1-(1/scale));
+yc_1 = 40-20*(1-(1/scale));
+yc_2 = 20-20*(1-(1/scale));
 
 [X1, Y1] = meshgrid (linspace ((L1-W1_l)/2, (L1+W1_l)/2, W1),...
-		     linspace ((yc_1)-H1_l/2, (yc_1)+H1_l/2, H1)); 
+             linspace ((yc_1)-H1_l/2, (yc_1)+H1_l/2, H1));
 [X2, Y2] = meshgrid (linspace ((L1-W2_l)/2, (L1+W2_l)/2, W2),...
-		     linspace ((yc_2)-H2_l/2, (yc_2)+H2_l/2, H2)); 
-
-N1 = numel(X1);
-N2 = numel(X2);
-Nparticelle = N1 + N2;
+                linspace ((yc_2)-H2_l/2, (yc_2)+H2_l/2, H2));
 
 ptcls.x = [[X1(:);X2(:)], [Y1(:);Y2(:)]]';
-ptcls.p = randn (size (ptcls.x)) * .1;
-ptcls.p(2, 1:N1) = ptcls.p(2, 1:N1) -10;
+ptcls.p = randn (size (ptcls.x)) * .01;
 grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
 d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
+% initialize the momentum
+ptcls.p(:,1:numel(X1)) = [0; -5]*ones(1,numel(X1));
+ptcls.p(:,numel(X1)+1:end) = [0;5]*ones(1,numel(X2));
 
 % number of time steps
 tFinal = 4;
@@ -54,9 +77,9 @@ ghost = @(ptcls, NP) updateGhost(ptcls, NP, L1, L2, rCut, rCut);
 dKdp = @(p) p/m;
 
 %% run the simulation
-savingStep = 100;
-[q, p] = sint.cellVelVerlet(force,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
-%[q, p] = sint.cellForest(force,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
+savingStep = 10;
+%[q, p] = sint.cellVelVerlet(force,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
+[q, p] = sint.cellForest(force,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
 
 %% plot the results
 figure

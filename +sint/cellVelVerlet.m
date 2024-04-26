@@ -1,4 +1,4 @@
-function [q,p] = cellVelVerlet(dTdq,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,savingStep)
+function [q,p] = cellVelVerlet(dTdq,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,updateGhost,savingStep)
 
     [ND, NP] = size(ptcls.x);
 
@@ -12,13 +12,16 @@ function [q,p] = cellVelVerlet(dTdq,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundary
 
     for i = 2:nTime
         %momentum tmp
-        ptmp = Ftmp*dt/2 + ptcls.p;
+        ptmp = Ftmp(:,1:NP)*dt/2 + ptcls.p(:,1:NP);
        
         % position
-        ptcls.x = dKdp(ptmp)*dt + ptcls.x;
-        
+        ptcls.x(:,1:NP) = dKdp(ptmp)*dt + ptcls.x(:,1:NP);
+
         %update boundary conditions
-        ptcls = boundaryConditions(ptcls);
+        ptcls.x(:,1:NP) = boundaryConditions(ptcls.x(:,1:NP));
+
+        %update ghost particles
+        ptcls.x = updateGhost(ptcls.x(:,1:NP), NP);
 
         %recalculate the grid
         grd_to_ptcl = sint.init_ptcl_mesh(grd, ptcls);
@@ -27,12 +30,12 @@ function [q,p] = cellVelVerlet(dTdq,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundary
         Ftmp = - dTdq(ptcls, grd_to_ptcl);
        
         %momentum
-        ptcls.p = Ftmp*dt/2 + ptmp;
+        ptcls.p(:,1:NP) = Ftmp(:,1:NP)*dt/2 + ptmp(:,1:NP);
 
         % saving the results
         if mod(i,savingStep) == 0
-            q(:,:,i/savingStep) = ptcls.x;
-            p(:,:,i/savingStep) = ptcls.p;
+            q(:,:,i/savingStep) = ptcls.x(:,1:NP);
+            p(:,:,i/savingStep) = ptcls.p(:,1:NP);
 
             disp("-------------------------------------")
             % print the time
