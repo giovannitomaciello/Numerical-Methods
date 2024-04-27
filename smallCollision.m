@@ -8,9 +8,9 @@ L1 = 70; % L of the domain
 L2 = 100; % H of the domain
 epsilon = 20;
 sigma = .5;
-rCut = 2.5*sigma;
+rCut = 1.25*sigma;
 m = 1;
-dt = 0.0005;
+dt = 0.001;
 1;
 
 %% generate two rotating circles colliding
@@ -61,8 +61,8 @@ dKdp = @(p) p/m;
 
 %% run the simulation
 savingStep = 10;
-%[q, p] = sint.cellVelVerlet(force,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
-[q, p] = sint.cellForest(force,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
+[q, p] = sint.cellVelVerlet(force,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
+%[q, p] = sint.cellForest(force,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
 
 %% plot the results
 figure
@@ -92,6 +92,22 @@ for i = 1:size(q,3)
     drawnow
     hold off
 end
+
+%% calculate Energy
+kb = 1.380658e-23;
+for i = 1:size(q,3)
+    KU(i,:) = Energy(q(:,:,i), p(:,:,i), m, sigma, epsilon)*(1.66e-27);
+end
+
+%%
+figure
+plot(linspace(1,tFinal,size(q,3)),KU(:,1),"LineWidth",1.4)
+hold on
+plot(linspace(1,tFinal,size(q,3)),KU(:,2),"LineWidth",1.4)
+plot(linspace(1,tFinal,size(q,3)),KU(:,1) + KU(:,2),"LineWidth",1.4)
+xlabel("Time [-]","FontSize",11,"FontWeight","bold")
+ylabel("Energy","FontSize",11,"FontWeight","bold")
+legend(["K" "U" "Etot"])
 
 %% FUNCTIONS
 
@@ -204,4 +220,31 @@ function x = updateGhost(x, NP, L1, L2, hx, hy)
         top = find(top);
         x = [x, [x(1,top); x(2,top)-L2+2*hy]];
     end
+end
+
+function E = Energy(q, p, m, sigmaij, epsij)
+    n = size(q,2);
+
+    % calculate kinetic energy
+    K = sum(m.*( sum( (p./m).^2 ,2) )) /2;
+
+    % calculate distance
+    dx = q(1,:) - q(1,:)';
+    dy = q(2,:) - q(2,:)';
+    r2 = dx.^2 + dy.^2  + eye(n);
+
+    % calculate sigma2 - 6
+    sigma2 = (sigmaij^2)./r2;
+    sigma6 = sigma2.*sigma2.*sigma2;
+
+    %set diagonal to 0
+    sigma6(1:n+1:end) = 0;
+
+    % calculate potential energy
+    U = 4*epsij*sigma6.*(sigma6 - 1);
+
+    % sum potential energy
+    U = sum(sum(U))/2;
+
+    E = [K U];
 end
