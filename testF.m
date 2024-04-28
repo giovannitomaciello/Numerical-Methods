@@ -8,7 +8,7 @@ L1 = 40; % length of the domain
 L2 = 70; % width of the domain
 epsilon = 5;
 sigma = 1;
-rCut = 10*sigma;
+rCut = 2.5*sigma;
 m = 1;
 dt = 0.0001;
 
@@ -53,17 +53,17 @@ sigmaij = 1;
 % colormap(hsv(size(ptcls.x,2)))
 % colorbar
 
-mesh (grd.x, grd.y, zeros (numel(grd.y), numel(grd.x)))
-view (2)
-hold on
-for jj = 1 : grd.ncx
-  for ii = 1 : grd.ncy
-    plot (ptcls.x(1, grd_to_ptcl{ii,jj}),...
-          ptcls.x(2, grd_to_ptcl{ii,jj}), 'Marker','square')
-    axis ([grd.x(1) grd.x(end) grd.y(1) grd.y(end)])
-    pause (.1)
-  end
-end
+% mesh (grd.x, grd.y, zeros (numel(grd.y), numel(grd.x)))
+% view (2)
+% hold on
+% for jj = 1 : grd.ncx
+%   for ii = 1 : grd.ncy
+%     plot (ptcls.x(1, grd_to_ptcl{ii,jj}),...
+%           ptcls.x(2, grd_to_ptcl{ii,jj}), 'Marker','square')
+%     axis ([grd.x(1) grd.x(end) grd.y(1) grd.y(end)])
+%     pause (.1)
+%   end
+% end
 
 %% start test 1
 index = cellfun(@numel, grd_to_ptcl, 'UniformOutput', true);
@@ -76,6 +76,7 @@ nonEmpty = find(index>=1);
 nonEmpty = setdiff(nonEmpty,removeIndex);
 rcut2 = min(grd.x(2) - grd.x(1),grd.y(2) - grd.y(1))^2;
 
+for i = 1:20000
 for i = nonEmpty(:)'
     % w-n-e-s-sw-nw-ne-su adiacent cells
     adCells = [i, i-nLy, i-1, i+nLy, i+1, i-nLy+1, i-nLy-1, i+nLy-1, i+nLy+1];
@@ -93,7 +94,7 @@ for i = nonEmpty(:)'
 
     % get pairwise inside/outside cut radius
     fc = find(distanceMat2 < rcut2 & distanceMat2 > eps);
-    [fc1, ~] = ind2sub(size(distanceMat2),fc);
+    fc1 = rem(fc-1,size(distanceMat2,1))+1;
 
     if isempty(fc) == 1
         continue
@@ -104,15 +105,15 @@ for i = nonEmpty(:)'
     dy = dy(fc);
 
     % calculate force between local and adiacent particles
-    fc1Unique = unique(fc1);
     Fx = zeros(length(indexPtclLocal),1); Fy = Fx;
     [Fxv, Fyv] = lennardJonesForce(dx, dy, r2Local, sigmaij, epsij);
 
     % calc forces on localPtcls
-    offset = min(fc1Unique) - 1;
+    offset = min(fc1) - 1;
+    maxFc1 = max(fc1);
     fc1Offsetted = fc1 - offset;
-    Fx(fc1Unique) = accumarray(fc1Offsetted(:),Fxv(:));
-    Fy(fc1Unique) = accumarray(fc1Offsetted(:),Fyv(:));
+    Fx(offset+1:maxFc1) = accumarray(fc1Offsetted(:),Fxv(:));
+    Fy(offset+1:maxFc1) = accumarray(fc1Offsetted(:),Fyv(:));
 
     % sum forces
     Fvectx(indexPtclLocal) = Fvectx(indexPtclLocal) + Fx;
@@ -120,6 +121,7 @@ for i = nonEmpty(:)'
 end
 
 Ff = [Fvectx'; Fvecty'];
+end
 
 %% start test Matrix
 Fm = LennardJonesForceM(ptcls.x', sigmaij, epsij);

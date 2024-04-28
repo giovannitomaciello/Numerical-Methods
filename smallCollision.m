@@ -8,7 +8,7 @@ L1 = 70; % L of the domain
 L2 = 100; % H of the domain
 epsilon = 20;
 sigma = .5;
-rCut = 1.25*sigma;
+rCut = 2.5*sigma;
 m = 1;
 dt = 0.001;
 1;
@@ -54,15 +54,15 @@ tFinal = 4;
 nTime = round(tFinal/dt);
 
 %% functions to pass to the integrator
-force = @(ptcls, grd_to_ptcl) forceCells(ptcls, grd_to_ptcl, epsilon, sigma, rCut^2); % this is -Force (negative)
+force = @(dx, dy, r2) lennardJonesForce(dx, dy, r2, sigma, epsilon); % this is -Force (negative)
 boundaryConditions = @(ptcls) updateBoundaryConditions(ptcls, L1, L2, rCut, rCut);
 ghost = @(ptcls, NP) updateGhost(ptcls, NP, L1, L2, rCut, rCut);
 dKdp = @(p) p/m;
 
 %% run the simulation
 savingStep = 10;
-[q, p] = sint.cellVelVerlet(force,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
-%[q, p] = sint.cellForest(force,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
+[q, p] = sint.cellVelVerlet(force, rCut^2, dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
+%[q, p] = sint.cellForest(force, rCut^2, dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
 
 %% plot the results
 figure
@@ -110,72 +110,15 @@ ylabel("Energy","FontSize",11,"FontWeight","bold")
 legend(["K" "U" "Etot"])
 
 %% FUNCTIONS
+function [Fx, Fy] = lennardJonesForce(dx, dy, r2, sigmaij, epsij)
+    % calculate sigma2 - 6
+    sigma2 = (sigmaij^2)./r2;
+    sigma6 = sigma2.*sigma2.*sigma2;
 
-function F = forceCells(ptcls, grd_to_ptcl, epsij, sigmaij, rcut2)
-    index = cellfun(@numel, grd_to_ptcl, 'UniformOutput', true);
-    Fvectx = zeros(numel(ptcls.x)/2,1);
-    Fvecty = zeros(numel(ptcls.x)/2,1);
-
-    [nLy, nLx] = size(grd_to_ptcl);
-    removeIndex = unique([1:nLy, 1:nLy:nLx*nLy, nLy:nLy:nLx*nLy, nLy*nLx-nLy+1:nLx*nLy]);
-    nonEmpty = find(index>=1);
-    nonEmpty = setdiff(nonEmpty,removeIndex);
-
-    for i = nonEmpty(:)'
-        % w-n-e-s-sw-nw-ne-su adiacent cells
-        adCells = [i, i-nLy, i-1, i+nLy, i+1, i-nLy+1, i-nLy-1, i+nLy-1, i+nLy+1];
-        indexPtclAd = grd_to_ptcl(adCells); indexPtclAd = vertcat(indexPtclAd{:});
-        indexPtclLocal = grd_to_ptcl(i); indexPtclLocal = vertcat(indexPtclLocal{:});
-
-        if isempty(indexPtclAd) == 1
-            continue
-        end
-    
-        % calculate pairwise distance between local and adiacent particles
-        dx = ptcls.x(1,indexPtclAd) - ptcls.x(1,indexPtclLocal)';
-        dy = ptcls.x(2,indexPtclAd) - ptcls.x(2,indexPtclLocal)';
-        distanceMat2 = dx.^2 + dy.^2;
-
-        % get pairwise inside/outside cut radius
-        fc = find(distanceMat2 < rcut2 & distanceMat2 > eps);
-        [fc1, ~] = ind2sub(size(distanceMat2),fc);
-    
-        if isempty(fc) == 1
-            continue
-        end
-
-        r2Local = distanceMat2(fc);
-        dx = dx(fc);
-        dy = dy(fc);
-
-        % calculate force between local and adiacent particles
-        fc1Unique = unique(fc1);
-        Fx = zeros(length(indexPtclLocal),1); Fy = Fx;
-        [Fxv, Fyv] = lennardJonesForce(dx, dy, r2Local, sigmaij, epsij);
-
-        % calc forces on localPtcls
-        fc1Offsetted = discretize(fc1,length(fc1Unique));
-        Fx(fc1Unique) = accumarray(fc1Offsetted(:),Fxv(:));
-        Fy(fc1Unique) = accumarray(fc1Offsetted(:),Fyv(:));
-
-        % sum forces
-        Fvectx(indexPtclLocal) = Fvectx(indexPtclLocal) + Fx;
-        Fvecty(indexPtclLocal) = Fvecty(indexPtclLocal) + Fy;
-    end
-
-    F = [Fvectx'; Fvecty'];
-
-    %% internal functions
-    function [Fx, Fy] = lennardJonesForce(dx, dy, r2, sigmaij, epsij)
-        % calculate sigma2 - 6
-        sigma2 = (sigmaij^2)./r2;
-        sigma6 = sigma2.*sigma2.*sigma2;
-
-        % calculate force
-        Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2;
-        Fx = Fmat.*dx;
-        Fy = Fmat.*dy;
-    end
+    % calculate force
+    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2;
+    Fx = Fmat.*dx;
+    Fy = Fmat.*dy;
 end
 
 function x = updateBoundaryConditions(x, L1, L2, hx, hy)
