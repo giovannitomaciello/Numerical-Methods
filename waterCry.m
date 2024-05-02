@@ -2,7 +2,7 @@ clc; clear all; close all;
 
 
 sigmaij = 2.725;
-dist = 2.8;
+dist = 3.5;
 kb = 1.380658e-23;
 epsij = 355.8060*kb/(1.66e-27); % Da A^2/10^-10 s
 
@@ -15,8 +15,8 @@ kb = 1.380658e-23; %J/K
 sigma_OO = 2.75; %nm
 epsi_OO = 80*kb/(1.66e-27); %
 
-sigma_HH = 2.05; %nm
-epsi_HH = 145*kb/(1.66e-27); %
+sigma_HH = sigma_OO; %nm
+epsi_HH = epsi_OO ; %
 
 
 sigma_HO = (sigma_OO + sigma_HH )/2 ; %A
@@ -102,9 +102,9 @@ LJ_epsi(stessa_molecola) = 0;
 
 r = LennardJonesForce(q0, LJ_sigma, LJ_epsi);
 
-px0 = zeros(1,Na); % A/ps
-py0 = zeros(1,Na); % A/ps
-pz0 = zeros(1,Na); % A/ps
+px0 = randn(1,Na); % A/ps
+py0 = randn(1,Na); % A/ps
+pz0 = randn(1,Na); % A/ps
 p0 = [px0', py0', pz0']; % A/ps
 
 %% Forces
@@ -113,8 +113,11 @@ F = @(q) LennardJonesForce(q, LJ_sigma, LJ_epsi); %Da A/ps^2
 G = @(q) constraints(q,stessa_molecola);
 S = @(q) Sfunc(q,C,ind_constraints);
 
+
+r = G(q0);
+
 %% init
-t = 0:1e-5:0.008; %
+t = 0:1e-5:0.005; %
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -124,7 +127,7 @@ t = 0:1e-5:0.008; %
 
 %% plot
 figure
-for i = 1:size(q,1)
+for i = 1:size(q,3)
     gplot3(connectivity,q(:,:,i),'lineWidth',2,'Color','k')
     hold on
     scatter3(q(1:3:end,1,i),q(1:3:end,2,i),q(1:3:end,3,i),80,"red","filled")
@@ -132,6 +135,7 @@ for i = 1:size(q,1)
     scatter3(q(3:3:end,1,i),q(3:3:end,2,i),q(3:3:end,3,i),60,"blue","filled")
     axis equal
     drawnow
+
     hold off
 end
 
@@ -141,6 +145,7 @@ end
 E = zeros(1,numel(t));
 U = zeros(1,numel(t));
 K = zeros(1,numel(t));
+error = zeros(1,numel(t));
 
 for i = 1:length(t)
     [E(i), U(i), K(i)] = Energy(q(:,:,i), p(:,:,i), m, LJ_sigma, LJ_epsi);
@@ -148,13 +153,13 @@ for i = 1:length(t)
     dy = q(:,2,i) - q(:,2,i)';
     dz = q(:,3,i) - q(:,3,i)';
     r = (dx.^2 + dy.^2 + dz.^2).^(1/2);
-    error = abs(r(ind_constraints) - C(ind_constraints))./C(ind_constraints);
-    error(i) = sum(error)*100;
+    error_vet = abs(r(ind_constraints) - C(ind_constraints))./C(ind_constraints);
+    error(i) = sum(error_vet,"all")*100;
 end
 
 figure(2)
-hold on
 plot(t,E,"LineWidth",2)
+hold on
 plot(t,K,"LineWidth",2)
 plot(t,U,"LineWidth",2)
 legend(["Total Energy","Kin Energy", "Pot Energy"])
@@ -163,7 +168,6 @@ ylabel("Energy [J]","FontSize",11,"FontWeight","bold")
 
 
 figure(3)
-hold on
 plot(t,error,"LineWidth",2)
 xlabel("Time [s]","FontSize",11,"FontWeight","bold")
 ylabel("Sum relative error constraints [%]","FontSize",11,"FontWeight","bold")
