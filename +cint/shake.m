@@ -48,5 +48,4 @@ function toZero = sysEB(lambda,Gq0,q_tilde,m,dt,S)
         Gq = tensorprod(Gq0,lambda,2,1);
         q = q_tilde + dt^2 * Gq./m;
         toZero = S(q);
-
 end

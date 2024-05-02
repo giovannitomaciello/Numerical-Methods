@@ -1,16 +1,29 @@
 clc; clear all; close all;
 
-cint = CINT;
-int = INT;
+
+sigmaij = 2.725;
+dist = 2.8;
+kb = 1.380658e-23;
+epsij = 355.8060*kb/(1.66e-27); % Da A^2/10^-10 s
 
 %% water crystal parameters
-HOdist = 0.96; % oxygen atom
-HOangle = 104.5; % hydrogen atoms
-HHdist = 0.96*sind(HOangle/2)*2;
-sigmaij = 2.725;
-dist = sigmaij*2^(1/6)/2;
-kb = 1.380658e-23;
-epsij = 355.8060*kb/(1.66e-27)/50000; % J
+HOdist = 0.96; % A
+HOangle = 104.5; 
+HHdist = 0.96*sind(HOangle/2)*2; %A
+kb = 1.380658e-23; %J/K
+
+sigma_OO = 2.75; %nm
+epsi_OO = 80*kb/(1.66e-27); %
+
+sigma_HH = 2.05; %nm
+epsi_HH = 145*kb/(1.66e-27); %
+
+
+sigma_HO = (sigma_OO + sigma_HH )/2 ; %A
+epsi_HO = sqrt(epsi_HH*epsi_OO); %
+
+% 
+%dist = 2.725*2^(1/6)/2; %A
 
 %% 3D water molecules
 positionNoRot = [0 HOdist*cosd(HOangle/2); -HOdist*sind(HOangle/2) 0; HOdist*sind(HOangle/2) 0];
@@ -45,7 +58,10 @@ position3layer = [position3layer , ones(length(position3layer),1)*dist];
 q0 = [position1layer; position2layer; position3layer];
 p0 = zeros(size(q0));
 
+
 %% constraint matrix
+
+
 C = sparse(size(q0,1),size(q0,1));
 connectivity = C;
 for i = 3:3:size(q0,1)
@@ -58,33 +74,52 @@ for i = 3:3:size(q0,1)
 end
 
 C = C + C';
+ind_constraints = find(triu(C));
 
-gplot3(connectivity,q0,'lineWidth',2,'Color','k')
-hold on
-scatter3(q0(1:3:end,1),q0(1:3:end,2),q0(1:3:end,3),80,"red","filled")
-scatter3(q0(2:3:end,1),q0(2:3:end,2),q0(2:3:end,3),60,"blue","filled")
-scatter3(q0(3:3:end,1),q0(3:3:end,2),q0(3:3:end,3),60,"blue","filled")
+% gplot3(connectivity,q0,'lineWidth',2,'Color','k')
+% hold on
+% scatter3(q0(1:3:end,1),q0(1:3:end,2),q0(1:3:end,3),80,"red","filled")
+% scatter3(q0(2:3:end,1),q0(2:3:end,2),q0(2:3:end,3),60,"blue","filled")
+% scatter3(q0(3:3:end,1),q0(3:3:end,2),q0(3:3:end,3),60,"blue","filled")
 
 %%
 Na = size(q0,1);
 m = repmat([16 1 1],[1,Na/3])'; % Da
-px0 = zeros(1,Na); % nm/ns
-py0 = zeros(1,Na); % nm/ns
-pz0 = zeros(1,Na); % nm/ns
-p0 = [px0', py0', pz0']; % nm/ns
+m_ind = m+m';
+
+LJ_sigma = zeros(Na,Na);
+LJ_sigma(m_ind==16*2) = sigma_OO;
+LJ_sigma(m_ind==1*2) = sigma_HH;
+LJ_sigma(m_ind==1+16) = sigma_HO;
+stessa_molecola = find(C);
+LJ_sigma(stessa_molecola) = 0;
+
+LJ_epsi = zeros(Na,Na);
+LJ_epsi(m_ind==16*2) = epsi_OO;
+LJ_epsi(m_ind==1*2) = epsi_HH;
+LJ_epsi(m_ind==1+16) = epsi_HO;
+LJ_epsi(stessa_molecola) = 0;
+
+r = LennardJonesForce(q0, LJ_sigma, LJ_epsi);
+
+px0 = zeros(1,Na); % A/ps
+py0 = zeros(1,Na); % A/ps
+pz0 = zeros(1,Na); % A/ps
+p0 = [px0', py0', pz0']; % A/ps
 
 %% Forces
 dKdp = @(p) p./m;
-F = @(q, constraintsEqZero) LennardJonesForceConstrained(q, sigmaij, epsij, constraintsEqZero);
-G = @(q,lambda) constraints(q,lambda);
+F = @(q) LennardJonesForce(q, LJ_sigma, LJ_epsi); %Da A/ps^2
+G = @(q) constraints(q,stessa_molecola);
+S = @(q) Sfunc(q,C,ind_constraints);
 
 %% init
-t = 0:1e-4:0.05;
+t = 0:1e-5:0.008; %
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-q = cint.shake(q0,p0,F,dKdp,G,C,m,t);
-%[q p] = cint.rattle(q0,p0,F,dKdp,G,C,m,t);
+[q p] = cint.shake(q0,p0,F,dKdp,G,S,t,m);
+%[q p] = cint.rattle(q0,p0,F,dKdp,G,S,t);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% plot
@@ -99,34 +134,92 @@ for i = 1:size(q,1)
     drawnow
     hold off
 end
-%%
+
+
+%% Energy and error
+
+E = zeros(1,numel(t));
+U = zeros(1,numel(t));
+K = zeros(1,numel(t));
+
 for i = 1:length(t)
-    T(i) = sum(m.*( sum( (p(:,:,i)./m).^2 ,2) )) /Na/2/kb*(1.66e-27);
+    [E(i), U(i), K(i)] = Energy(q(:,:,i), p(:,:,i), m, LJ_sigma, LJ_epsi);
+    dx = q(:,1,i) - q(:,1,i)';
+    dy = q(:,2,i) - q(:,2,i)';
+    dz = q(:,3,i) - q(:,3,i)';
+    r = (dx.^2 + dy.^2 + dz.^2).^(1/2);
+    error = abs(r(ind_constraints) - C(ind_constraints))./C(ind_constraints);
+    error(i) = sum(error)*100;
 end
 
+figure(2)
+hold on
+plot(t,E,"LineWidth",2)
+plot(t,K,"LineWidth",2)
+plot(t,U,"LineWidth",2)
+legend(["Total Energy","Kin Energy", "Pot Energy"])
+xlabel("Time [s]","FontSize",11,"FontWeight","bold")
+ylabel("Energy [J]","FontSize",11,"FontWeight","bold")
+
+
+figure(3)
+hold on
+plot(t,error,"LineWidth",2)
+xlabel("Time [s]","FontSize",11,"FontWeight","bold")
+ylabel("Sum relative error constraints [%]","FontSize",11,"FontWeight","bold")
+
+
 %%
-figure(1)
-plot(t,T - mean(T),"LineWidth",1.4)
-xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
-ylabel("T [K]","FontSize",11,"FontWeight","bold")
+% for i = 1:length(t)
+%     T(i) = sum(m.*( sum( (p(:,:,i)./m).^2 ,2) )) /Na/2/kb*(1.66e-27);
+% end
+
+%%
+% figure(1)
+% plot(t,T - mean(T),"LineWidth",1.4)
+% xlabel("Time [ns]","FontSize",11,"FontWeight","bold")
+% ylabel("T [K]","FontSize",11,"FontWeight","bold")
 
 %% Functions
 
-function [G,r2] = constraints(q,lambda)
-n = length(q);
-G = zeros(n,3);
-dx = q(:,1) - q(:,1)'; dxC = 2*dx.*lambda;
-dy = q(:,2) - q(:,2)'; dyC = 2*dy.*lambda;
-dz = q(:,3) - q(:,3)'; dzC = 2*dz.*lambda;
-r2 = dx.^2 + dy.^2 + dz.^2;
+function G = constraints(q,stessa_molecola)
+    NP = size(q,1);
+    NC = NP;
+    ND = 3;
+    G = zeros(NP,NP,3);
+    dx = q(:,1) - q(:,1)'; dxC = 2*dx;
+    dy = q(:,2) - q(:,2)'; dyC = 2*dy;
+    dz = q(:,3) - q(:,3)'; dzC = 2*dz;
 
-% sum
-G(:,1) = sum(dxC,2);
-G(:,2) = sum(dyC,2);
-G(:,3) = sum(dzC,2);
+
+    Gx = sparse(NP,NP);
+    Gy = Gx;
+    Gz = Gx;
+
+
+    Gx(stessa_molecola) = dxC(stessa_molecola);
+    Gy(stessa_molecola) = dyC(stessa_molecola);
+    Gz(stessa_molecola) = dzC(stessa_molecola);
+
+    G(:,:,1) = Gx;
+    G(:,:,2) = Gy;
+    G(:,:,3) = Gz;
+
+    
 end
 
-function F = LennardJonesForceConstrained(q, sigmaij, epsij, constraintsEqZero)
+function out = Sfunc(q,C,ind_constraints)
+
+ dx = q(:,1) - q(:,1)';
+ dy = q(:,2) - q(:,2)';
+ dz = q(:,3) - q(:,3)';
+ r = dx.^2 + dy.^2 + dz.^2;
+
+ out(1:numel(ind_constraints))= r(ind_constraints) - C(ind_constraints).^2;
+
+end
+
+function F = LennardJonesForce(q, LJ_sigma, LJ_epsi)
 n = length(q);
 F = zeros(n,3);
 
@@ -137,14 +230,14 @@ dz = q(:,3) - q(:,3)';
 r2 = dx.^2 + dy.^2 + dz.^2 + eye(n);
 
 % calculate sigma2 - 6
-sigma2 = (sigmaij^2)./r2;
+sigma2 = (LJ_sigma.^2)./r2;
 sigma6 = sigma2.*sigma2.*sigma2;
 
 % calculate force
-Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2;
-Fx = -Fmat.*dx.*constraintsEqZero;
-Fy = -Fmat.*dy.*constraintsEqZero;
-Fz = -Fmat.*dz.*constraintsEqZero;
+Fmat = 48*LJ_epsi.*sigma6.*(sigma6 - 0.5)./r2;
+Fx = -Fmat.*dx;
+Fy = -Fmat.*dy;
+Fz = -Fmat.*dz;
 
 % sum forces
 F(:,1) = sum(Fx,2);
@@ -152,7 +245,7 @@ F(:,2) = sum(Fy,2);
 F(:,3) = sum(Fz,2);
 end
 
-function E = Energy(q, p, m, sigmaij, epsij)
+function [E,U,K] = Energy(q, p, m, LJ_sigma, LJ_epsi)
 n = length(q);
 
 % calculate kinetic energy
@@ -165,15 +258,17 @@ dz = q(:,3) - q(:,3)';
 r2 = dx.^2 + dy.^2 + dz.^2  + eye(n);
 
 % calculate sigma2 - 6
-sigma2 = (sigmaij^2)./r2;
+sigma2 = (LJ_sigma.^2)./r2;
 sigma6 = sigma2.*sigma2.*sigma2;
 
 %set diagonal to 0
 sigma6(1:n+1:end) = 0;
 
 % calculate potential energy
-U = 4*epsij*sigma6.*(sigma6 - 1);
+U_mat = 4*LJ_epsi.*sigma6.*(sigma6 - 1);
+
+U = sum(sum(U_mat))/2;
 
 % sum potential energy
-E = sum(sum(U))/2 + K;
+E = U + K;
 end
