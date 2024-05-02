@@ -60,9 +60,7 @@ p0 = zeros(size(q0));
 
 
 %% constraint matrix
-
-
-C = sparse(size(q0,1),size(q0,1));
+C = zeros(size(q0,1),size(q0,1));
 connectivity = C;
 for i = 3:3:size(q0,1)
     C(i-2,i-1) = HOdist;
@@ -91,7 +89,7 @@ LJ_sigma = zeros(Na,Na);
 LJ_sigma(m_ind==16*2) = sigma_OO;
 LJ_sigma(m_ind==1*2) = sigma_HH;
 LJ_sigma(m_ind==1+16) = sigma_HO;
-stessa_molecola = find(C);
+stessa_molecola = C>0;
 LJ_sigma(stessa_molecola) = 0;
 
 LJ_epsi = zeros(Na,Na);
@@ -117,7 +115,7 @@ S = @(q) Sfunc(q,C,ind_constraints);
 r = G(q0);
 
 %% init
-t = 0:1e-5:0.005; %
+t = 0:0.5e-5:0.001; %
 
 %!!! CHOOSE A METHOD !!!%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -195,15 +193,13 @@ function G = constraints(q,stessa_molecola)
     dy = q(:,2) - q(:,2)'; dyC = 2*dy;
     dz = q(:,3) - q(:,3)'; dzC = 2*dz;
 
-
-    Gx = sparse(NP,NP);
+    Gx = zeros(NP,NP);
     Gy = Gx;
     Gz = Gx;
 
-
-    Gx(stessa_molecola) = dxC(stessa_molecola);
-    Gy(stessa_molecola) = dyC(stessa_molecola);
-    Gz(stessa_molecola) = dzC(stessa_molecola);
+    Gx = stessa_molecola.*dxC;
+    Gy = stessa_molecola.*dyC;
+    Gz = stessa_molecola.*dzC;
 
     G(:,:,1) = Gx;
     G(:,:,2) = Gy;
