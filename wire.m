@@ -2,7 +2,7 @@ clear
 clc
 close all
 
-dx = .2; L2 = dx^2;
+dx = .1; L2 = dx^2;
 L = 2;
 m = 1*ones(L/dx,1)/(L/dx);
 NP = length(m);
@@ -44,8 +44,10 @@ end
 figure(1)
 minq = min(q(:));
 maxq = max(q(:));
-
-for i = 1:5:length(t)
+% save the video
+v = VideoWriter('wire_dx_0.1_dt_0.001.avi');
+open(v)
+for i = 1:15:length(t)
     % plot
     plot([0; q(:,1,i)],[0; q(:,2,i)])
     xlim([minq maxq])
@@ -53,8 +55,11 @@ for i = 1:5:length(t)
     % annotate time
     text(0.85,0.95,sprintf("t = %.2f s",t(i)),'Units','normalized')
     drawnow
+    frame = getframe(gcf);
+    writeVideo(v,frame);
     hold off
 end
+close(v)
 
 %%
 figure(2)

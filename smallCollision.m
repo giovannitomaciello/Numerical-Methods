@@ -8,7 +8,7 @@ L1 = 70; % L of the domain
 L2 = 100; % H of the domain
 epsilon = 20;
 sigma = .5;
-rCut = 2.5*sigma;
+rCut = 10*sigma;
 m = 1;
 dt = 0.001;
 1;
@@ -66,7 +66,10 @@ savingStep = 10;
 
 %% plot the results
 figure
-for i = 1:size(q,3)
+% save the video
+v = VideoWriter('smallCollq.avi');
+open(v)
+for i = 1:5:size(q,3)
     scatter(q(1,1:numel(X1),i), q(2,1:numel(X1),i), 10,"red" ,'filled')
     hold on
     scatter(q(1,numel(X1)+1:end,i), q(2,numel(X1)+1:end,i), 10,"blue" ,'filled')
@@ -76,12 +79,18 @@ for i = 1:size(q,3)
     yline(L2-rCut)
     yline(rCut)
     drawnow
+    frame = getframe(gcf);
+    writeVideo(v,frame);
     hold off
 end
+close(v)
 
 %% plot the results p
 figure
-for i = 1:size(q,3)
+% save the video
+v = VideoWriter('smallCollp.avi');
+open(v)
+for i = 1:5:size(q,3)
     scatter(q(1,:,i), q(2,:,i), 10,vecnorm(p(:,:,i)) ,'filled')
     hold on
     axis([0 L1 0 L2])
@@ -90,8 +99,11 @@ for i = 1:size(q,3)
     yline(L2-rCut)
     yline(rCut)
     drawnow
+    frame = getframe(gcf);
+    writeVideo(v,frame);
     hold off
 end
+close(v)
 
 %% calculate Energy
 kb = 1.380658e-23;

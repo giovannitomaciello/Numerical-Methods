@@ -60,6 +60,9 @@ savingStep = 1000;
 
 %% plot the results
 figure
+% save the video
+v = VideoWriter('collq.avi');
+open(v)
 for i = 1:size(q,3)
     scatter(q(1,1:numel(X1),i), q(2,1:numel(X1),i), 5,"red" ,'filled')
     hold on
@@ -73,11 +76,17 @@ for i = 1:size(q,3)
     % annotate the time
     text(0.8*L1,0.9*L2,sprintf("t = %.2f",i*tFinal/size(q,3)))
     drawnow
+    frame = getframe(gcf);
+    writeVideo(v,frame);
     hold off
 end
+close(v)
 
 %% plot the results p
 figure
+% save the video
+v = VideoWriter('collp.avi');
+open(v)
 for i = 1:size(q,3)
     scatter(q(1,:,i), q(2,:,i), 5,vecnorm(p(:,:,i)) ,"filled")
     hold on
@@ -93,8 +102,12 @@ for i = 1:size(q,3)
     % annotate the time
     text(0.8*L1,0.9*L2,sprintf("t = %.2f",i*tFinal/size(q,3)))
     drawnow
+    frame = getframe(gcf);
+    writeVideo(v,frame);
     hold off
 end
+close(v)
+
 %% FUNCTIONS
 function [Fx, Fy] = lennardJonesForce(dx, dy, r2, sigmaij, epsij)
     % calculate sigma2 - 6

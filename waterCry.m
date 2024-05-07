@@ -125,6 +125,9 @@ t = 0:0.5e-5:0.001; %
 
 %% plot
 figure
+% save the video
+v = VideoWriter('wCry6030.avi');
+open(v)
 for i = 1:size(q,3)
     gplot3(connectivity,q(:,:,i),'lineWidth',2,'Color','k')
     hold on
@@ -132,10 +135,14 @@ for i = 1:size(q,3)
     scatter3(q(2:3:end,1,i),q(2:3:end,2,i),q(2:3:end,3,i),60,"blue","filled")
     scatter3(q(3:3:end,1,i),q(3:3:end,2,i),q(3:3:end,3,i),60,"blue","filled")
     axis equal
+    view(60,30)
+    grid on
     drawnow
-
+    frame = getframe(gcf);
+    writeVideo(v,frame);
     hold off
 end
+close(v)
 
 
 %% Energy and error
