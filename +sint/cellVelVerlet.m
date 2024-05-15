@@ -6,7 +6,7 @@ function [q,p] = cellVelVerlet(dTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,bo
     p = zeros(ND,NP,nTime/savingStep);
      
     %Ftmp ha dimensioni [ND,NP] e Ftmp(i,j) rappresenta la componente i sulla particella j  
-    Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2);
+    Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2, grd.removeIndex);
 
     t = 0;
 
@@ -27,7 +27,7 @@ function [q,p] = cellVelVerlet(dTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,bo
         grd_to_ptcl = sint.init_ptcl_mesh(grd, ptcls);
 
         %Force tmp
-        Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2);
+        Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2, grd.removeIndex);
        
         %momentum
         ptcls.p(:,1:NP) = Ftmp(:,1:NP)*dt/2 + ptmp(:,1:NP);

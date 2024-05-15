@@ -6,7 +6,7 @@ function [q,p] = cellForest(dTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,bound
     p = zeros(ND,NP,nTime/savingStep);
      
     %Ftmp ha dimensioni [ND,NP] e Ftmp(i,j) rappresenta la componente i sulla particella j  
-    Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2);
+    Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2, grd.removeIndex);
 
     t = 0;
 
@@ -29,7 +29,7 @@ function [q,p] = cellForest(dTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,bound
         grd_to_ptcl = sint.init_ptcl_mesh(grd, ptcls);
 
         %Force tmp
-        Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2);
+        Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2, grd.removeIndex);
        
         %momentum
         ptmp = ptmp + (1 - gamma) * dt/2 * Ftmp(:,1:NP);
@@ -47,7 +47,7 @@ function [q,p] = cellForest(dTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,bound
         grd_to_ptcl = sint.init_ptcl_mesh(grd, ptcls);
 
         %Force
-        Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2);
+        Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2, grd.removeIndex);
 
         %momentum
         ptmp = ptmp + (1 - gamma) * dt/2 * Ftmp(:,1:NP);
@@ -65,7 +65,7 @@ function [q,p] = cellForest(dTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,bound
         grd_to_ptcl = sint.init_ptcl_mesh(grd, ptcls);
 
         %Force
-        Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2);
+        Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2, grd.removeIndex);
 
         %momentum
         ptcls.p(:,1:NP) = ptmp + gamma * dt/2 * Ftmp(:,1:NP);
@@ -77,7 +77,7 @@ function [q,p] = cellForest(dTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,bound
 
             disp("-------------------------------------")
             % print the time
-            fprintf('Time: %f\n', t);
+            fprintf('Time: %.4f\n', t);
             disp("-------------------------------------")
         end
         % save the time

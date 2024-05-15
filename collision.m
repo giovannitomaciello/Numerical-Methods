@@ -23,6 +23,11 @@ grd.ncy = L2/rCut;
 grd.ncx = L1/rCut;
 grd.x = linspace (0, L1, grd.ncx+1);
 grd.y = linspace (0, L2, grd.ncy+1);
+% index of the ghost cells
+nLx = grd.ncx;
+nLy = grd.ncy;
+grd.removeIndex = unique([1:nLy, 1:nLy:nLx*nLy, ...
+        nLy:nLy:nLx*nLy, nLy*nLx-nLy+1:nLx*nLy]);
 
 Dist = 5;
 yc_1 = 120-20*(1-(1/scale));
