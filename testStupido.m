@@ -11,61 +11,56 @@ hz = z(2) - z(1);
 
 [X, Y, Z] = meshgrid(y,x,z);
 
-q = [-1 1 -1 1];
+c = [-1 1 -1 1]; %cariche
+epsilon = .1;
 
-posizioni = [0.16455696,0.54676259,0.47368421;   
+q0 = [0.16455696,0.54676259,0.47368421;   
              0.06329114,0.32374101,0.21052632; 
              0.22784810,0.75539568,0.21052632; 
-             0.72151899,0.08633094,1];   
+             0.72151899,0.08633094,1]; 
 
+%% Smooth long range 
 G = 0.7;
 u = @(r) (G/sqrt(pi))^3*exp(-G^2*r.^2);
+
+F=@(q) force_long_range(q,X,Y,Z,Nx, Ny, Nz, hx, hy, hz,M,epsilon,u,c);
+
+
+
+
+function F = force_long_range(q,X,Y,Z,Nx, Ny, Nz, hx, hy, hz,M,epsilon,u,c)
 
 rho_lr = zeros(size(X));
 
 for k = 1:length(q)
-    r = sqrt((X - posizioni(k, 1)).^2 + (Y - posizioni(k, 2)).^2 + (Z - posizioni(k, 3)).^2);
+    r = sqrt((X - q(k, 1)).^2 + (Y - q(k, 2)).^2 + (Z - q(k, 3)).^2);
     rho_lr = rho_lr + q(k)*u(r);
 end
 
-figure;
-slice(X,Y,Z,rho_lr,[0.2 0.5 0.8],0.5,0.5)
-shading interp
-hold on;
-scatter3(posizioni(:, 1), posizioni(:, 2), posizioni(:, 3), 100, q, 'filled');
-text(posizioni(:, 1), posizioni(:, 2), posizioni(:, 3),num2str(q'), 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');
-title('Densità di carica nello spazio');
-xlabel('X');
-ylabel('Y');
-zlabel('Z');
-grid on;
-colorbar;
-axis equal;
-hold off;
-
-
-epsilon = .1;
 A = fem.createPoissonMatrix(Nx, Ny, Nz, hx, hy, hz);
 RHS = reshape(rho_lr,M,1)/epsilon;
 wnodes = fem.bnodes('w', X, Y, Z);
 enodes = fem.bnodes('e', X, Y, Z);
 bnodes = union(wnodes,enodes);
 inodes = setdiff(1:M,bnodes);
-u = zeros(M,1); u(wnodes) = 0; u(enodes) = 0;
+phi = zeros(M,1); phi(wnodes) = 0; phi(enodes) = 0;
 
-u = fem.solvePoisson(A, RHS, inodes, bnodes, u);
+phi = fem.solvePoisson(A, RHS, inodes, bnodes, phi);
 
-%show slice
-figure
-u1_slice = reshape(u,Nx,Ny,[]);
-slice(X,Y,Z,u1_slice,[0.2 0.5 0.8],0.5,0.5)
-shading interp
-colorbar
-title('u1')
+phi_slice = reshape(phi,Nx,Ny,[]);
+
+[dphi_x, dphi_y, dphi_z] = gradient(phi_slice, hx, hy, hz);
 
 
+phix = c'.*interp3(X,Y,Z,dphi_x,q(:,1),q(:,2),q(:,3));
+phiy = c'.*interp3(X,Y,Z,dphi_y,q(:,1),q(:,2),q(:,3));
+phiz = c'.*interp3(X,Y,Z,dphi_z,q(:,1),q(:,2),q(:,3));
 
+Fx = 1/2*sum(phix-phix',2);
+Fy = 1/2*sum(phiy-phiy',2);
+Fz = 1/2*sum(phiz-phiz',2);
 
+F = [Fx,Fy,Fz];
 
-
+end 
 
