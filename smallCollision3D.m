@@ -11,7 +11,7 @@ epsilon = 20;
 sigma = .5;
 rCut = 4*sigma;
 m = 1;
-dt = 0.0001;
+dt = 0.001;
 
 %% generate two rotating circles colliding
 scale = 1;
@@ -27,16 +27,6 @@ grd.ncz = L3/rCut;
 grd.x = linspace (0, L1, grd.ncx+1);
 grd.y = linspace (0, L2, grd.ncy+1);
 grd.z = linspace (0, L3, grd.ncz+1);
-nLx = grd.ncx;
-nLy = grd.ncy;
-nLz = grd.ncz;
-counter = 0;
-grd.removeIndex = [1:nLx*nLy, nLx*nLy*nLz-nLx*nLy+1:nLx*nLy*nLz];
-for i = 1:nLz
-    grd.removeIndex = unique([grd.removeIndex, 1+counter:nLy+counter, 1+counter:nLy:nLx*nLy+counter, ...
-        nLy+counter:nLy:nLx*nLy+counter, nLy*nLx-nLy+1+counter:nLx*nLy+counter]);
-        counter = counter + nLx*nLy;
-end
 
 [X, Y, Z] = meshgrid(linspace(-H1_l/2,H1_l/2,H1),linspace(-W1_l/2,W1_l/2,W1),linspace(-D1_l/2,D1_l/2,D1));
 
@@ -69,6 +59,15 @@ epsi = .1;
  
 
 grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
+[nLy, nLx, nLz] = size(grd_to_ptcl);
+counter = 0;
+grd.removeIndex = [1:nLx*nLy, nLx*nLy*nLz-nLx*nLy+1:nLx*nLy*nLz];
+for i = 1:nLz
+    grd.removeIndex = unique([grd.removeIndex, 1+counter:nLy+counter, 1+counter:nLy:nLx*nLy+counter, ...
+        nLy+counter:nLy:nLx*nLy+counter, nLy*nLx-nLy+1+counter:nLx*nLy+counter]);
+        counter = counter + nLx*nLy;
+end
+
 d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
 
 % number of time steps
@@ -140,7 +139,7 @@ legend(["K" "U" "Etot"])
 %% FUNCTIONS
 
 function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLocal, indexPtclAd, sigmaij, epsij, epsilon, rc)
-    qiqj = ptcls.q(1,indexPtclLocal)'.*ptcls.q(1,indexPtclAd);
+    qiqj = ptcls.q(indexPtclLocal)'.*ptcls.q(indexPtclAd);
     qiqj = qiqj(fc);
 
     % calculate sigma2 - 6
