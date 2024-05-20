@@ -21,11 +21,7 @@ function [q,p] = cellVelVerlet(dTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,bo
         ptcls.x(:,1:NP) = boundaryConditions(ptcls.x(:,1:NP));
 
         %update ghost particles
-        if isfield(ptcls,'q')
-            [ptcls.x,ptcls.q] = updateGhost(ptcls.x(:,1:NP),ptcls.q, NP);
-        else
-            ptcls.x = updateGhost(ptcls.x(:,1:NP), NP);
-        end
+        ptcls = updateGhost(ptcls, NP);
 
         %recalculate the grid
         grd_to_ptcl = sint.init_ptcl_mesh(grd, ptcls);

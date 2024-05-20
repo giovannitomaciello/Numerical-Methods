@@ -23,7 +23,7 @@ function [q,p] = cellForest(dTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,bound
         ptcls.x(:,1:NP) = boundaryConditions(ptcls.x(:,1:NP));
 
         %update ghost particles
-        ptcls.x = updateGhost(ptcls.x(:,1:NP), NP);
+        ptcls = updateGhost(ptcls, NP);
 
         %recalculate the grid
         grd_to_ptcl = sint.init_ptcl_mesh(grd, ptcls);
@@ -41,7 +41,7 @@ function [q,p] = cellForest(dTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,bound
         ptcls.x(:,1:NP) = boundaryConditions(ptcls.x(:,1:NP));
 
         %update ghost particles
-        ptcls.x = updateGhost(ptcls.x(:,1:NP), NP);
+        ptcls = updateGhost(ptcls, NP);
 
         %recalculate the grid
         grd_to_ptcl = sint.init_ptcl_mesh(grd, ptcls);
@@ -59,7 +59,7 @@ function [q,p] = cellForest(dTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,bound
         ptcls.x(:,1:NP) = boundaryConditions(ptcls.x(:,1:NP));
 
         %update ghost particles
-        ptcls.x = updateGhost(ptcls.x(:,1:NP), NP);
+        ptcls = updateGhost(ptcls, NP);
 
         %recalculate the grid
         grd_to_ptcl = sint.init_ptcl_mesh(grd, ptcls);

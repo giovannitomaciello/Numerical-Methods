@@ -142,28 +142,29 @@ function x = updateBoundaryConditions(x, L1, L2, hx, hy)
     end
 end
 
-function x = updateGhost(x, NP, L1, L2, hx, hy)
-    if any(x(1,:) < 2*hx) || any(x(1,:) > L1-2*hx) ...
-            || any(x(2,:) < 2*hy) || any(x(2,:) > L2-2*hx)
+function ptcls = updateGhost(ptcls, NP, L1, L2, hx, hy)
+    ptcls.x = ptcls.x(:,1:NP);
+    if any(ptcls.x(1,:) < 2*hx) || any(ptcls.x(1,:) > L1-2*hx) ...
+            || any(ptcls.x(2,:) < 2*hy) || any(ptcls.x(2,:) > L2-2*hx)
         % periodic boundary conditions using ghost cells
         % left boundary
-        left = x(1,1:NP) < 2*hx;
+        left = ptcls.x(1,1:NP) < 2*hx;
         left = find(left);
-        x = [x, [x(1,left)+L1-2*hx; x(2,left)]];
+        ptcls.x = [ptcls.x, [ptcls.x(1,left)+L1-2*hx; ptcls.x(2,left)]];
 
         % right boundary
-        right = x(1,1:NP) > L1-2*hx;
+        right = ptcls.x(1,1:NP) > L1-2*hx;
         right = find(right);
-        x = [x, [x(1,right)-L1+2*hx; x(2,right)]];
+        ptcls.x = [ptcls.x, [ptcls.x(1,right)-L1+2*hx; ptcls.x(2,right)]];
 
         % bottom boundary
-        bottom = x(2,1:NP) < 2*hy;
+        bottom = ptcls.x(2,1:NP) < 2*hy;
         bottom = find(bottom);
-        x = [x, [x(1,bottom); x(2,bottom)+L2-2*hy]];
+        ptcls.x = [ptcls.x, [ptcls.x(1,bottom); ptcls.x(2,bottom)+L2-2*hy]];
 
         % top boundary
-        top = x(2,1:NP) > L2-2*hy;
+        top = ptcls.x(2,1:NP) > L2-2*hy;
         top = find(top);
-        x = [x, [x(1,top); x(2,top)-L2+2*hy]];
+        ptcls.x = [ptcls.x, [ptcls.x(1,top); ptcls.x(2,top)-L2+2*hy]];
     end
 end
