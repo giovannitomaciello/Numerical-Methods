@@ -60,6 +60,14 @@ Px2 = Px/3; Py2 = Py/3-15; Pz2 = Pz + 0;
 
 ptcls.x = [[X1(:);X2(:)], [Y1(:);Y2(:)], [Z1(:);Z2(:)]]';
 ptcls.p = [[Px1(:);Px2(:)], [Py1(:);Py2(:)], [Pz1(:);Pz2(:)]]';
+
+carica1 = ones(1,numel(X1));
+carica2 = -1*carica1;
+
+ptcls.q = [[carica1 carica2];[carica1 carica2];[carica1 carica2]];
+epsi = .1;
+ 
+
 grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
 d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
 
@@ -68,7 +76,7 @@ tFinal = 4;
 nTime = round(tFinal/dt);
 
 %% functions to pass to the integrator
-force = @(dx, dy, dz, r2) lennardJonesForce(dx, dy, dz, r2, sigma, epsilon); % this is -Force (negative)
+force = @(dx, dy, dz, r2,qiqj) lennardJonesForce(dx, dy, dz, r2,qiqj, sigma, epsilon,epsi,rCut); % this is -Force (negative)
 boundaryConditions = @(ptcls) updateBoundaryConditions(ptcls, L1, L2, L3, rCut, rCut, rCut);
 ghost = @(ptcls, NP) updateGhost(ptcls, NP, L1, L2, L3, rCut, rCut, rCut);
 dKdp = @(p) p/m;
@@ -129,17 +137,19 @@ ylabel("Energy","FontSize",11,"FontWeight","bold")
 legend(["K" "U" "Etot"])
 
 %% FUNCTIONS
-function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, sigmaij, epsij)
+
+function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, qiqj, sigmaij, epsij,epsilon,rc)
     % calculate sigma2 - 6
     sigma2 = (sigmaij^2)./r2;
     sigma6 = sigma2.*sigma2.*sigma2;
 
     % calculate force
-    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2;
+    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2 + qiqj/epsilon.*(1./(r2.^(3/2))+ 4/rc^2 - 3*sqrt(r2)/rc^3);
     Fx = Fmat.*dx;
     Fy = Fmat.*dy;
     Fz = Fmat.*dz;
 end
+
 
 function x = updateBoundaryConditions(x, L1, L2, L3, hx, hy, hz)
     if any(x(1,:) < hx) || any(x(1,:) > L1 - hx) || any(x(2,:) < hy) ...

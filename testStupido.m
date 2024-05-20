@@ -11,13 +11,28 @@ hz = z(2) - z(1);
 
 [X, Y, Z] = meshgrid(y,x,z);
 
-c = [-1 1 -1 1]; %cariche
+c = [-1 1]; %cariche
+m = [10 10];
 epsilon = .1;
 
+%init
 q0 = [0.16455696,0.54676259,0.47368421;   
-             0.06329114,0.32374101,0.21052632; 
-             0.22784810,0.75539568,0.21052632; 
-             0.72151899,0.08633094,1]; 
+             0.06329114,0.32374101,0.21052632];
+             % 0.22784810,0.75539568,0.21052632; 
+             % 0.72151899,0.08633094,1];
+
+p0 = zeros(size(q0));
+
+
+NP = size(q0,1);
+ND = size(q0,2);
+
+K = @(p)  sum(vecnorm(p').^2/2./m);
+
+dKdp = @(p) p./m';
+
+t = 0:0.1:5;
+
 
 %% Smooth long range 
 G = 0.7;
@@ -26,13 +41,28 @@ u = @(r) (G/sqrt(pi))^3*exp(-G^2*r.^2);
 F=@(q) force_long_range(q,X,Y,Z,Nx, Ny, Nz, hx, hy, hz,M,epsilon,u,c);
 
 
+[q p] = int.velVerlet(q0,p0,F,dKdp,t);
+
+figure
+for i = 1:length(t)
+    scatter3(q(:,1,i), q(:,2,i), q(:,3,i), 100, c, 'filled');
+    text(q(:,1,i), q(:,2,i), q(:,3,i),num2str(c'), 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');
+    xlim([0 1])
+    ylim([0 1])
+    zlim([0 1])
+    drawnow
+
+    clf
+end
+
+
 
 
 function F = force_long_range(q,X,Y,Z,Nx, Ny, Nz, hx, hy, hz,M,epsilon,u,c)
 
 rho_lr = zeros(size(X));
 
-for k = 1:length(q)
+for k = 1:length(c)
     r = sqrt((X - q(k, 1)).^2 + (Y - q(k, 2)).^2 + (Z - q(k, 3)).^2);
     rho_lr = rho_lr + q(k)*u(r);
 end
@@ -56,9 +86,9 @@ phix = c'.*interp3(X,Y,Z,dphi_x,q(:,1),q(:,2),q(:,3));
 phiy = c'.*interp3(X,Y,Z,dphi_y,q(:,1),q(:,2),q(:,3));
 phiz = c'.*interp3(X,Y,Z,dphi_z,q(:,1),q(:,2),q(:,3));
 
-Fx = 1/2*sum(phix-phix',2);
-Fy = 1/2*sum(phiy-phiy',2);
-Fz = 1/2*sum(phiz-phiz',2);
+Fx = 1/2*phix;
+Fy = 1/2*phiy;
+Fz = 1/2*phiz;
 
 F = [Fx,Fy,Fz];
 
