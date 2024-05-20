@@ -11,7 +11,7 @@ epsilon = 20;
 sigma = .5;
 rCut = 4*sigma;
 m = 1;
-dt = 0.0005;
+dt = 0.0001;
 
 %% generate two rotating circles colliding
 scale = 1;
@@ -64,7 +64,7 @@ ptcls.p = [[Px1(:);Px2(:)], [Py1(:);Py2(:)], [Pz1(:);Pz2(:)]]';
 carica1 = ones(1,numel(X1));
 carica2 = -1*carica1;
 
-ptcls.q = [[carica1 carica2];[carica1 carica2];[carica1 carica2]];
+ptcls.q = [carica1 carica2];
 epsi = .1;
  
 
@@ -111,7 +111,7 @@ figure
 v = VideoWriter('smallCollp.avi');
 open(v)
 for i = 1:size(q,3)
-    scatter3(q(1,:,i), q(2,:,i),  q(2,:,i), 10,vecnorm(p(:,:,i)) ,'filled')
+    scatter3(q(1,:,i), q(2,:,i),  q(3,:,i), 10,vecnorm(p(:,:,i)) ,'filled')
     hold on
     axis([0 L1 0 L2 0 L3])
     drawnow
@@ -139,8 +139,8 @@ legend(["K" "U" "Etot"])
 
 %% FUNCTIONS
 
-function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLocal,indexPtclAd, sigmaij, epsij, epsilon, rc)
-    qiqj = ptcls.q(indexPtclLocal)*ptcls.q(indexPtclAd)';
+function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLocal, indexPtclAd, sigmaij, epsij, epsilon, rc)
+    qiqj = ptcls.q(1,indexPtclLocal)'.*ptcls.q(1,indexPtclAd);
     qiqj = qiqj(fc);
 
     % calculate sigma2 - 6

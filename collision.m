@@ -23,11 +23,6 @@ grd.ncy = L2/rCut;
 grd.ncx = L1/rCut;
 grd.x = linspace (0, L1, grd.ncx+1);
 grd.y = linspace (0, L2, grd.ncy+1);
-% index of the ghost cells
-nLx = grd.ncx;
-nLy = grd.ncy;
-grd.removeIndex = unique([1:nLy, 1:nLy:nLx*nLy, ...
-        nLy:nLy:nLx*nLy, nLy*nLx-nLy+1:nLx*nLy]);
 
 Dist = 5;
 yc_1 = 120-20*(1-(1/scale));
@@ -46,6 +41,9 @@ ptcls.x = [[X1(:);X2(:)], [Y1(:);Y2(:)]]';
 ptcls.p = randn (size (ptcls.x)) * .1;
 ptcls.p(2, 1:N1) = ptcls.p(2, 1:N1) -10;
 grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
+[nLy, nLx] = size(grd_to_ptcl);
+grd.removeIndex = unique([1:nLy, 1:nLy:nLx*nLy, ...
+        nLy:nLy:nLx*nLy, nLy*nLx-nLy+1:nLx*nLy]);
 d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
 
 % number of time steps

@@ -39,20 +39,20 @@ function F = forceCells(forceCalculator, ptcls, grd_to_ptcl, rcut2, removeIndex)
                 dy = dy(fc);
         
 
-                        % calculate force between local and adiacent particles
-                        Fx = zeros(length(indexPtclLocal),1); Fy = Fx;
-                        [Fxv, Fyv] = forceCalculator(dx, dy, r2Local);
+                % calculate force between local and adiacent particles
+                Fx = zeros(length(indexPtclLocal),1); Fy = Fx;
+                [Fxv, Fyv] = forceCalculator(dx, dy, r2Local);
                 
-                        % calc forces on localPtcls
-                        offset = min(fc1) - 1;
-                        maxFc1 = max(fc1);
-                        fc1Offsetted = fc1 - offset;
-                        Fx(offset+1:maxFc1) = accumarray(fc1Offsetted(:),Fxv(:));
-                        Fy(offset+1:maxFc1) = accumarray(fc1Offsetted(:),Fyv(:));
+                % calc forces on localPtcls
+                offset = min(fc1) - 1;
+                maxFc1 = max(fc1);
+                fc1Offsetted = fc1 - offset;
+                Fx(offset+1:maxFc1) = accumarray(fc1Offsetted(:),Fxv(:));
+                Fy(offset+1:maxFc1) = accumarray(fc1Offsetted(:),Fyv(:));
                 
-                        % sum forces
-                        Fvectx(indexPtclLocal) = Fvectx(indexPtclLocal) + Fx;
-                        Fvecty(indexPtclLocal) = Fvecty(indexPtclLocal) + Fy;
+                % sum forces
+                Fvectx(indexPtclLocal) = Fvectx(indexPtclLocal) + Fx;
+                Fvecty(indexPtclLocal) = Fvecty(indexPtclLocal) + Fy;
 
             end
             F = [Fvectx'; Fvecty'];
@@ -98,22 +98,22 @@ function F = forceCells(forceCalculator, ptcls, grd_to_ptcl, rcut2, removeIndex)
                 dy = dy(fc);
                 dz = dz(fc);
                 
-                        % calculate force between local and adiacent particles
-                        Fx = zeros(length(indexPtclLocal),1); Fy = Fx; Fz = Fx;
-                        [Fxv, Fyv, Fzv] = forceCalculator(dx, dy, dz, r2Local,ptcls,fc,indexPtclLocal,indexPtclAd);
+                % calculate force between local and adiacent particles
+                Fx = zeros(length(indexPtclLocal),1); Fy = Fx; Fz = Fx;
+                [Fxv, Fyv, Fzv] = forceCalculator(dx, dy, dz, r2Local,ptcls,fc,indexPtclLocal,indexPtclAd);
                 
-                        % calc forces on localPtcls
-                        offset = min(fc1) - 1;
-                        maxFc1 = max(fc1);
-                        fc1Offsetted = fc1 - offset;
-                        Fx(offset+1:maxFc1) = accumarray(fc1Offsetted(:),Fxv(:));
-                        Fy(offset+1:maxFc1) = accumarray(fc1Offsetted(:),Fyv(:));
-                        Fz(offset+1:maxFc1) = accumarray(fc1Offsetted(:),Fzv(:));
+                % calc forces on localPtcls
+                offset = min(fc1) - 1;
+                maxFc1 = max(fc1);
+                fc1Offsetted = fc1 - offset;
+                Fx(offset+1:maxFc1) = accumarray(fc1Offsetted(:),Fxv(:));
+                Fy(offset+1:maxFc1) = accumarray(fc1Offsetted(:),Fyv(:));
+                Fz(offset+1:maxFc1) = accumarray(fc1Offsetted(:),Fzv(:));
                 
-                        % sum forces
-                        Fvectx(indexPtclLocal) = Fvectx(indexPtclLocal) + Fx;
-                        Fvecty(indexPtclLocal) = Fvecty(indexPtclLocal) + Fy;
-                        Fvectz(indexPtclLocal) = Fvectz(indexPtclLocal) + Fz;
+                % sum forces
+                Fvectx(indexPtclLocal) = Fvectx(indexPtclLocal) + Fx;
+                Fvecty(indexPtclLocal) = Fvecty(indexPtclLocal) + Fy;
+                Fvectz(indexPtclLocal) = Fvectz(indexPtclLocal) + Fz;
             end
             F = [Fvectx'; Fvecty'; Fvectz'];
     end

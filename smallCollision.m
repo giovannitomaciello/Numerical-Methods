@@ -6,11 +6,11 @@ clc; clear
 %% parameters of the simulation
 L1 = 70; % L of the domain
 L2 = 100; % H of the domain
-epsilon = 20;
-sigma = .5;
-rCut = 10*sigma;
+epsilon = 5;
+sigma = 1;
+rCut = 5*sigma;
 m = 1;
-dt = 0.001;
+dt = 0.0005;
 1;
 
 %% generate two rotating circles colliding
@@ -25,10 +25,6 @@ grd.ncy = L2/rCut;
 grd.ncx = L1/rCut;
 grd.x = linspace (0, L1, grd.ncx+1);
 grd.y = linspace (0, L2, grd.ncy+1);
-nLx = grd.ncx;
-nLy = grd.ncy;
-grd.removeIndex = unique([1:nLy, 1:nLy:nLx*nLy, ...
-        nLy:nLy:nLx*nLy, nLy*nLx-nLy+1:nLx*nLy]);
 
 [X, Y] = meshgrid(linspace(-H1_l/2,H1_l/2,H1),linspace(-W1_l/2,W1_l/2,W1));
 
@@ -51,6 +47,9 @@ Px2 = Px; Py2 = Py-10;
 ptcls.x = [[X1(:);X2(:)], [Y1(:);Y2(:)]]';
 ptcls.p = [[Px1(:);Px2(:)], [Py1(:);Py2(:)]]';
 grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
+[nLy, nLx] = size(grd_to_ptcl);
+grd.removeIndex = unique([1:nLy, 1:nLy:nLx*nLy, ...
+        nLy:nLy:nLx*nLy, nLy*nLx-nLy+1:nLx*nLy]);
 d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
 
 % number of time steps
