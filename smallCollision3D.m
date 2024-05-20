@@ -78,7 +78,7 @@ nTime = round(tFinal/dt);
 force = @(dx, dy, dz, r2, ptcls, fc,indexPtclLocal,indexPtclAd) lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLocal,indexPtclAd, ...
     sigma, epsilon,epsi,rCut); % this is -Force (negative)
 boundaryConditions = @(ptcls) updateBoundaryConditions(ptcls, L1, L2, L3, rCut, rCut, rCut);
-ghost = @(ptcls, NP) updateGhost(ptcls, NP, L1, L2, L3, rCut, rCut, rCut);
+ghost = @(ptcls,q, NP) updateGhost(ptcls, q, NP, L1, L2, L3, rCut, rCut, rCut);
 dKdp = @(p) p/m;
 
 %% run the simulation
@@ -179,7 +179,7 @@ function x = updateBoundaryConditions(x, L1, L2, L3, hx, hy, hz)
     end
 end
 
-function x = updateGhost(x, NP, L1, L2, L3, hx, hy, hz)
+function [x,q] = updateGhost(x,q, NP, L1, L2, L3, hx, hy, hz)
     if any(x(1,:) < 2*hx) || any(x(1,:) > L1-2*hx) ...
             || any(x(2,:) < 2*hy) || any(x(2,:) > L2-2*hx)...
             || any(x(3,:) < 2*hz) || any(x(3,:) > L3-2*hz)
@@ -188,31 +188,38 @@ function x = updateGhost(x, NP, L1, L2, L3, hx, hy, hz)
         left = x(1,1:NP) < 2*hx;
         left = find(left);
         x = [x, [x(1,left)+L1-2*hx; x(2,left); x(3,left)]];
+        q = [q,q(left)];
 
         % right boundary
         right = x(1,1:NP) > L1-2*hx;
         right = find(right);
         x = [x, [x(1,right)-L1+2*hx; x(2,right); x(3,right)]];
+        q = [q,q(right)];
 
         % bottom boundary
         bottom = x(2,1:NP) < 2*hy;
         bottom = find(bottom);
         x = [x, [x(1,bottom); x(2,bottom)+L2-2*hy; x(3,bottom)]];
+        q = [q,q(bottom)];
 
         % top boundary
         top = x(2,1:NP) > L2-2*hy;
         top = find(top);
         x = [x, [x(1,top); x(2,top)-L2+2*hy; x(3,top)]];
+        q = [q,q(top)];
 
         % front boundary
         front = x(3,1:NP) < 2*hz;
         front = find(front);
         x = [x, [x(1,front); x(2,front); x(3,front)+L3-2*hz]];
+        q = [q,q(front)];
 
         % back boundary
         back = x(3,1:NP) > L3-2*hz;
         back = find(back);
         x = [x, [x(1,back); x(2,back); x(3,back)-L3+2*hz]];
+        q = [q,q(back)];
+
     end
 end
 
