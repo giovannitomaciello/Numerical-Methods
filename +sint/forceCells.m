@@ -82,7 +82,6 @@ function F = forceCells(forceCalculator, ptcls, grd_to_ptcl, rcut2, removeIndex)
                 dx = ptcls.x(1,indexPtclAd) - ptcls.x(1,indexPtclLocal)';
                 dy = ptcls.x(2,indexPtclAd) - ptcls.x(2,indexPtclLocal)';
                 dz = ptcls.x(3,indexPtclAd) - ptcls.x(3,indexPtclLocal)';
-                qiqj = ptcls.q(indexPtclLocal)*ptcls.q(indexPtclAd)';
                 distanceMat2 = dx.^2 + dy.^2 + dz.^2;
 
         
@@ -98,11 +97,10 @@ function F = forceCells(forceCalculator, ptcls, grd_to_ptcl, rcut2, removeIndex)
                 dx = dx(fc);
                 dy = dy(fc);
                 dz = dz(fc);
-                qiqj = qiqj(fc);
                 
                         % calculate force between local and adiacent particles
                         Fx = zeros(length(indexPtclLocal),1); Fy = Fx; Fz = Fx;
-                        [Fxv, Fyv, Fzv] = forceCalculator(dx, dy, dz, r2Local,qiqj);
+                        [Fxv, Fyv, Fzv] = forceCalculator(dx, dy, dz, r2Local,ptcls,fc,indexPtclLocal,indexPtclAd);
                 
                         % calc forces on localPtcls
                         offset = min(fc1) - 1;

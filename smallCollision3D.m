@@ -76,7 +76,8 @@ tFinal = 4;
 nTime = round(tFinal/dt);
 
 %% functions to pass to the integrator
-force = @(dx, dy, dz, r2,qiqj) lennardJonesForce(dx, dy, dz, r2,qiqj, sigma, epsilon,epsi,rCut); % this is -Force (negative)
+force = @(dx, dy, dz, r2, ptcls, fc,indexPtclLocal,indexPtclAd) lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLocal,indexPtclAd, ...
+    sigma, epsilon,epsi,rCut); % this is -Force (negative)
 boundaryConditions = @(ptcls) updateBoundaryConditions(ptcls, L1, L2, L3, rCut, rCut, rCut);
 ghost = @(ptcls, NP) updateGhost(ptcls, NP, L1, L2, L3, rCut, rCut, rCut);
 dKdp = @(p) p/m;
@@ -138,7 +139,10 @@ legend(["K" "U" "Etot"])
 
 %% FUNCTIONS
 
-function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, qiqj, sigmaij, epsij,epsilon,rc)
+function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLocal,indexPtclAd, sigmaij, epsij, epsilon, rc)
+    qiqj = ptcls.q(indexPtclLocal)*ptcls.q(indexPtclAd)';
+    qiqj = qiqj(fc);
+
     % calculate sigma2 - 6
     sigma2 = (sigmaij^2)./r2;
     sigma6 = sigma2.*sigma2.*sigma2;

@@ -1,6 +1,6 @@
 clc; clear; close all
 
-Nx = 140; Ny = 80; Nz = 20;
+Nx = 20; Ny = 20; Nz = 20;
 x = linspace(0,1,Nx);
 y = linspace(0,1,Ny);
 z = linspace(0,1,Nz);
@@ -31,14 +31,22 @@ K = @(p)  sum(vecnorm(p').^2/2./m);
 
 dKdp = @(p) p./m';
 
-t = 0:0.1:5;
+t = 0:0.1:50;
+
+%% matrix
+A = fem.createPoissonMatrix(Nx, Ny, Nz, hx, hy, hz);
+wnodes = fem.bnodes('w', X, Y, Z);
+enodes = fem.bnodes('e', X, Y, Z);
+bnodes = union(wnodes,enodes);
+inodes = setdiff(1:M,bnodes);
+phi = zeros(M,1); phi(wnodes) = 0; phi(enodes) = 0;
 
 
 %% Smooth long range 
 G = 0.7;
 u = @(r) (G/sqrt(pi))^3*exp(-G^2*r.^2);
 
-F=@(q) force_long_range(q,X,Y,Z,Nx, Ny, Nz, hx, hy, hz,M,epsilon,u,c);
+F=@(q) force_long_range(q, X, Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, c, A, inodes, bnodes, phi);
 
 
 [q p] = int.velVerlet(q0,p0,F,dKdp,t);
@@ -58,7 +66,7 @@ end
 
 
 
-function F = force_long_range(q,X,Y,Z,Nx, Ny, Nz, hx, hy, hz,M,epsilon,u,c)
+function F = force_long_range(q, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, c, A, inodes, bnodes, phi)
 
 rho_lr = zeros(size(X));
 
@@ -67,20 +75,12 @@ for k = 1:length(c)
     rho_lr = rho_lr + q(k)*u(r);
 end
 
-A = fem.createPoissonMatrix(Nx, Ny, Nz, hx, hy, hz);
 RHS = reshape(rho_lr,M,1)/epsilon;
-wnodes = fem.bnodes('w', X, Y, Z);
-enodes = fem.bnodes('e', X, Y, Z);
-bnodes = union(wnodes,enodes);
-inodes = setdiff(1:M,bnodes);
-phi = zeros(M,1); phi(wnodes) = 0; phi(enodes) = 0;
-
 phi = fem.solvePoisson(A, RHS, inodes, bnodes, phi);
 
 phi_slice = reshape(phi,Nx,Ny,[]);
 
 [dphi_x, dphi_y, dphi_z] = gradient(phi_slice, hx, hy, hz);
-
 
 phix = c'.*interp3(X,Y,Z,dphi_x,q(:,1),q(:,2),q(:,3));
 phiy = c'.*interp3(X,Y,Z,dphi_y,q(:,1),q(:,2),q(:,3));
@@ -91,6 +91,5 @@ Fy = 1/2*phiy;
 Fz = 1/2*phiz;
 
 F = [Fx,Fy,Fz];
-
 end 
 
