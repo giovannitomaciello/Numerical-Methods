@@ -31,7 +31,7 @@ t = 0:0.01:10;
 %[q p] = int.crankNick(q0,p0,dTdq,dKdp,t);
 % [q,p] = int.posVerlet(q0,p0,dTdq,dKdp,m,t);
 %[q,p] = int.symplecticEuler(q0,p0,dTdq,dKdp,t);
-[q p] = cint.rattle(q0,p0,dTdq,dKdp,G,S,t,dGdt);
+[q p] = cint.rattle(q0,p0,dTdq,dKdp,G,S,t);
 q = reshape(q,1,3,[]);
 p = reshape(p,1,3,[]);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

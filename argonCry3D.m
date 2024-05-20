@@ -1,5 +1,4 @@
 clc; clear all; close all
-int = INT;
 
 %% constants
 kb = 1.380658e-23;
