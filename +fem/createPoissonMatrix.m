@@ -2,7 +2,7 @@ function out = createPoissonMatrix(Nx, Ny, Nz, hx, hy, hz)
     % Create a Poisson matrix for a 3D grid with Nx, Ny, Nz points in each
     % direction.
     % define lenghts
-    M = Ny;
+    M = Nx;
     L = Nx*Ny;
     K = Nx*Ny*Nz;
     e = ones(K,1);
