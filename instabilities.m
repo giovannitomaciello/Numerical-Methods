@@ -54,12 +54,37 @@ for i = 1:nLz
         counter = counter + nLx*nLy;
 end
 
+%% create Poisson mesh
+Nx = grd.ncx; Ny = grd.ncy; Nz = grd.ncz;
+x = linspace (-rCut, L2 + 3*rCut, Nx);
+y = linspace (-rCut, L1 + 3*rCut, Ny);
+z = linspace (-rCut, L3 + 3*rCut, Nz);
+M = Nx*Ny*Nz;
+hx = x(2) - x(1);
+hy = y(2) - y(1);
+hz = z(2) - z(1);
+
+[X, Y, Z] = meshgrid(y,x,z);
+
+epsilon = 1;
+A = fem.createPoissonMatrix(Nx, Ny, Nz, hx, hy, hz);
+% front and back boundary nodes
+wnodes = fem.bnodes('f', X, Y, Z);
+enodes = fem.bnodes('b', X, Y, Z);
+bnodes = union(wnodes,enodes);
+inodes = setdiff(1:M,bnodes);
+phi = zeros(M,1); phi(wnodes) = 0; phi(enodes) = 0;
+
+H = 3/pi/rCut^2;
+u = @(r) H*(1-r/rCut).*(r<=rCut);
+
 %% functions to pass to the integrator
 force = @(dx, dy, dz, r2, ptcls, fc,indexPtclLocal,indexPtclAd) lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLocal,indexPtclAd, ...
     sigma, epsilon, epsi, rCut); % this is -Force (negative)
 boundaryConditions = @(ptcls) updateBoundaryConditions(ptcls, L1, L2, L3, rCut, rCut, rCut);
 ghost = @(ptcls, NP) updateGhost(ptcls, NP, L1, L2, L3, rCut, rCut, rCut);
 dKdp = @(p) p/m;
+forcelr=@(ptcls) force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, inodes, bnodes, phi);
 
 %% run the simulation
 % number of time steps
@@ -67,7 +92,7 @@ dt = 0.001;
 tFinal = 10;
 nTime = round(tFinal/dt);
 savingStep = 100;
-[q, p] = sint.cellVelVerlet(force, rCut^2, dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
+[q, p] = sint.cellVelVerlet(force, forcelr, rCut^2, dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep,1);
 %[q, p] = sint.cellForest(force, rCut^2, dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
 
 %% plot the results
@@ -126,6 +151,34 @@ function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLo
     Fy = Fmat.*dy;
     Fz = Fmat.*dz;
 end
+
+function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, inodes, bnodes, phi)
+
+    rho_lr = zeros(size(X));
+
+    for k = 1:length(ptcls.q)
+        r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
+        rho_lr = rho_lr + ptcls.q(k)*u(r);
+    end
+
+    RHS = rho_lr(:)/epsilon;
+    phi = fem.solvePoisson(A, RHS, inodes, bnodes, phi);
+
+    phirec = reshape(phi,Nx,Ny,[]);
+
+    [dphi_x, dphi_y, dphi_z] = gradient(phirec, hx, hy, hz);
+
+    phix = ptcls.q.*interp3(X,Y,Z,dphi_x,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
+    phiy = ptcls.q.*interp3(X,Y,Z,dphi_y,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
+    phiz = ptcls.q.*interp3(X,Y,Z,dphi_z,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
+
+    Fx = 1/2*phix;
+    Fy = 1/2*phiy;
+    Fz = 1/2*phiz;
+
+    F = [Fx;Fy;Fz];
+end 
+
 
 
 function x = updateBoundaryConditions(x, L1, L2, L3, hx, hy, hz)

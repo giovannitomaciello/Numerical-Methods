@@ -72,7 +72,7 @@ rho_lr = zeros(size(X));
 
 for k = 1:length(c)
     r = sqrt((X - q(k, 1)).^2 + (Y - q(k, 2)).^2 + (Z - q(k, 3)).^2);
-    rho_lr = rho_lr + q(k)*u(r);
+    rho_lr = rho_lr + c(k)*u(r);
 end
 
 RHS = reshape(rho_lr,M,1)/epsilon;
