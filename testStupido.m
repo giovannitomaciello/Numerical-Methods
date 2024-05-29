@@ -11,7 +11,7 @@ hz = z(2) - z(1);
 
 [X, Y, Z] = meshgrid(y,x,z);
 
-c = [-1 1]; %cariche
+c = [-.5 .5]; %cariche
 m = [10 10];
 epsilon = .1;
 
@@ -42,11 +42,12 @@ inodes = setdiff(1:M,bnodes);
 phi = zeros(M,1); phi(wnodes) = 0; phi(enodes) = 0;
 
 
-%% Smooth long range 
-G = 0.7;
-u = @(r) (G/sqrt(pi))^3*exp(-G^2*r.^2);
+%% Smooth long range
+rCut = 3;
+H = 3/pi/rCut^2;
+u = @(r) H*(1-r/rCut).*(r<=rCut);
 
-F=@(q) force_long_range(q, X, Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, c, A, inodes, bnodes, phi);
+F=@(q) force_long_range(q,c, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, inodes, bnodes, phi);
 
 
 [q p] = int.velVerlet(q0,p0,F,dKdp,t);
@@ -63,33 +64,50 @@ for i = 1:length(t)
     clf
 end
 
+function F = force_long_range(q,c, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, inodes, bnodes, phi)
 
+    ptcls.x = q';
+    ptcls.q = c;
+    rho_lr = zeros(size(X));
 
+    for k = 1:length(ptcls.q)
+        r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
+        rho_lr = rho_lr + ptcls.q(k)*u(r);
+    end
 
-function F = force_long_range(q, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, c, A, inodes, bnodes, phi)
+    RHS = rho_lr(:)/epsilon;
+    phi = fem.solvePoisson(A, RHS, inodes, bnodes, phi);
 
-rho_lr = zeros(size(X));
+    phirec = reshape(phi,Nx,Ny,[]);
 
-for k = 1:length(c)
-    r = sqrt((X - q(k, 1)).^2 + (Y - q(k, 2)).^2 + (Z - q(k, 3)).^2);
-    rho_lr = rho_lr + c(k)*u(r);
-end
+    [dphi_x, dphi_y, dphi_z] = gradient(phirec, hx, hy, hz);
 
-RHS = reshape(rho_lr,M,1)/epsilon;
-phi = fem.solvePoisson(A, RHS, inodes, bnodes, phi);
+    phix = ptcls.q.*interp3(X,Y,Z,dphi_x,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
+    phiy = ptcls.q.*interp3(X,Y,Z,dphi_y,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
+    phiz = ptcls.q.*interp3(X,Y,Z,dphi_z,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
 
-phi_slice = reshape(phi,Nx,Ny,[]);
+    Fx = - 1/2*phix;
+    Fy = - 1/2*phiy;
+    Fz = - 1/2*phiz;
 
-[dphi_x, dphi_y, dphi_z] = gradient(phi_slice, hx, hy, hz);
+    Fl = [Fx;Fy;Fz]';
 
-phix = c'.*interp3(X,Y,Z,dphi_x,q(:,1),q(:,2),q(:,3));
-phiy = c'.*interp3(X,Y,Z,dphi_y,q(:,1),q(:,2),q(:,3));
-phiz = c'.*interp3(X,Y,Z,dphi_z,q(:,1),q(:,2),q(:,3));
+    qiqj = -1;
+    rc = 3;
 
-Fx = 1/2*phix;
-Fy = 1/2*phiy;
-Fz = 1/2*phiz;
+    dx = ptcls.x(1,:)-ptcls.x(1,:)';
+    dy = ptcls.x(2,:)-ptcls.x(2,:)';
+    dz = ptcls.x(3,:)-ptcls.x(3,:)';
 
-F = [Fx,Fy,Fz];
+    r2 = dx.^2+dy.^2+dz.^2+eye(2);
+
+    Fmat = -qiqj/epsilon.*(1./(r2.^(3/2))+ 4/rc^2 - 3*sqrt(r2)/rc^3);
+    Fx = sum(Fmat.*dx,1);
+    Fy = sum(Fmat.*dy,1);
+    Fz = sum(Fmat.*dz,1);
+
+    Fs = [Fx;Fy;Fz]';
+    Fs = 0;
+
+    F = Fs + Fl;
 end 
-

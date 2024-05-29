@@ -4,9 +4,9 @@ clc; clear all; close all
 rng("default")
 clc; clear
 %% parameters of the simulation
-L1 = 40; % L of the domain
-L2 = 40; % H of the domain
-L3 = 40; % D of the domain
+L1 = 60; % L of the domain
+L2 = 60; % H of the domain
+L3 = 60; % D of the domain
 epsilon = 20;
 sigma = .5;
 rCut = 4*sigma;
@@ -41,11 +41,11 @@ Py = -Xc*2;
 Pz = zeros(size(Zc));
 
 % copy to first circle
-X1 = Xc + 18; Y1 = Yc-5 + 20; Z1 = Zc + 15;
+X1 = Xc + 30; Y1 = Yc-5 + 30; Z1 = Zc + 30;
 Px1 = Px/3; Py1 = Py/3+15; Pz1 = Pz + 0;
 
 % copy to second circle
-X2 = Xc + 18; Y2 = Yc+5 + 20; Z2 = Zc + 15;
+X2 = Xc + 30; Y2 = Yc+5 + 30; Z2 = Zc + 30;
 Px2 = Px/3; Py2 = Py/3-15; Pz2 = Pz + 0;
 
 ptcls.x = [[X1(:);X2(:)], [Y1(:);Y2(:)], [Z1(:);Z2(:)]]';
@@ -54,7 +54,7 @@ ptcls.p = [[Px1(:);Px2(:)], [Py1(:);Py2(:)], [Pz1(:);Pz2(:)]]';
 carica1 = ones(1,numel(X1));
 carica2 = -1*carica1;
 
-ptcls.q = [carica1 carica2];
+ptcls.q = [carica1 carica2]*.5;
 epsi = .1;
  
 
@@ -73,6 +73,31 @@ d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
 % number of time steps
 tFinal = 1;
 nTime = round(tFinal/dt);
+epsilon = 1;
+
+
+Nx = grd.ncx; Ny = grd.ncy; Nz = grd.ncz;
+x = linspace (-rCut, L2 + rCut, Nx)+ rCut/2;
+y = linspace (-rCut, L1 + rCut, Ny) + rCut/2;
+z = linspace (-rCut, L3 + rCut, Nz)+ rCut/2;
+M = Nx*Ny*Nz;
+hx = x(2) - x(1);
+hy = y(2) - y(1);
+hz = z(2) - z(1);
+
+[X, Y, Z] = meshgrid(y,x,z);
+
+
+A = fem.createPoissonMatrix(Nx, Ny, Nz, hx, hy, hz);
+% front and back boundary nodes
+wnodes = fem.bnodes('f', X, Y, Z);
+enodes = fem.bnodes('b', X, Y, Z);
+bnodes = union(wnodes,enodes);
+inodes = setdiff(1:M,bnodes);
+phi = zeros(M,1); phi(wnodes) = 0; phi(enodes) = 0;
+
+H = 3/pi/rCut^2;
+u = @(r) H*(1-r/rCut).*(r.^2<=rCut^2);
 
 %% functions to pass to the integrator
 force = @(dx, dy, dz, r2, ptcls, fc,indexPtclLocal,indexPtclAd) lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLocal,indexPtclAd, ...
@@ -80,16 +105,17 @@ force = @(dx, dy, dz, r2, ptcls, fc,indexPtclLocal,indexPtclAd) lennardJonesForc
 boundaryConditions = @(ptcls) updateBoundaryConditions(ptcls, L1, L2, L3, rCut, rCut, rCut);
 ghost = @(ptcls, NP) updateGhost(ptcls, NP, L1, L2, L3, rCut, rCut, rCut);
 dKdp = @(p) p/m;
+forcelr=@(ptcls) force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, inodes, bnodes, phi);
+
 
 %% run the simulation
 savingStep = 10;
-[q, p] = sint.cellVelVerlet(force, rCut^2, dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
-%[q, p] = sint.cellForest(force, rCut^2, dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
+[q, p] = sint.cellVelVerlet(force,forcelr, rCut^2, dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep,1);
 
 %% plot the results
 figure
 % save the video
-v = VideoWriter('smallCollq.avi');
+v = VideoWriter('smallCollq3D.avi');
 open(v)
 for i = 1:size(q,3)
     scatter3(q(1,1:numel(X1),i), q(2,1:numel(X1),i), q(3,1:numel(X1),i), 10,"red" ,'filled')
@@ -107,7 +133,7 @@ close(v)
 %% plot the results p
 figure
 % save the video
-v = VideoWriter('smallCollp.avi');
+v = VideoWriter('smallCollp3D.avi');
 open(v)
 for i = 1:size(q,3)
     scatter3(q(1,:,i), q(2,:,i),  q(3,:,i), 10,vecnorm(p(:,:,i)) ,'filled')
@@ -120,21 +146,6 @@ for i = 1:size(q,3)
 end
 close(v)
 
-%% calculate Energy
-kb = 1.380658e-23;
-for i = 1:size(q,3)
-    KU(i,:) = Energy(q(:,:,i), p(:,:,i), m, sigma, epsilon)*(1.66e-27);
-end
-
-%%
-figure
-plot(linspace(1,tFinal,size(q,3)),KU(:,1),"LineWidth",1.4)
-hold on
-plot(linspace(1,tFinal,size(q,3)),KU(:,2),"LineWidth",1.4)
-plot(linspace(1,tFinal,size(q,3)),KU(:,1) + KU(:,2),"LineWidth",1.4)
-xlabel("Time [-]","FontSize",11,"FontWeight","bold")
-ylabel("Energy","FontSize",11,"FontWeight","bold")
-legend(["K" "U" "Etot"])
 
 %% FUNCTIONS
 
@@ -147,13 +158,38 @@ function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLo
     sigma6 = sigma2.*sigma2.*sigma2;
 
     % calculate force
-    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2 + qiqj/epsilon.*(1./(r2.^(3/2))+ 4/rc^2 - 3*sqrt(r2)/rc^3);
+    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2 - qiqj/epsilon.*(1./(r2.^(3/2)) -4/rc^(3/2) + 3./sqrt(r2)/rc);
     Fx = Fmat.*dx;
     Fy = Fmat.*dy;
     Fz = Fmat.*dz;
 end
 
+function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, inodes, bnodes, phi)
 
+    rho_lr = zeros(size(X));
+
+    for k = 1:length(ptcls.q)
+        r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
+        rho_lr = rho_lr + ptcls.q(k)*u(r);
+    end
+
+    RHS = rho_lr(:)/epsilon;
+    phi = fem.solvePoisson(A, RHS, inodes, bnodes, phi);
+
+    phirec = reshape(phi,Nx,Ny,[]);
+
+    [dphi_x, dphi_y, dphi_z] = gradient(phirec, hx, hy, hz);
+
+    phix = ptcls.q.*interp3(X,Y,Z,dphi_x,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
+    phiy = ptcls.q.*interp3(X,Y,Z,dphi_y,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
+    phiz = ptcls.q.*interp3(X,Y,Z,dphi_z,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
+
+    Fx =  1/2*phix;
+    Fy =  1/2*phiy;
+    Fz =  1/2*phiz;
+
+    F = [Fx;Fy;Fz];
+end 
 function x = updateBoundaryConditions(x, L1, L2, L3, hx, hy, hz)
     if any(x(1,:) < hx) || any(x(1,:) > L1 - hx) || any(x(2,:) < hy) ...
         || any(x(2,:) > L2 - hy) || any(x(3,:) < hz) || any(x(3,:) > L3 - hz)
@@ -225,30 +261,3 @@ function ptcls = updateGhost(ptcls, NP, L1, L2, L3, hx, hy, hz)
     end
 end
 
-function E = Energy(q, p, m, sigmaij, epsij)
-    n = size(q,2);
-
-    % calculate kinetic energy
-    K = sum(m.*( sum( (p./m).^2 ,2) )) /2;
-
-    % calculate distance
-    dx = q(1,:) - q(1,:)';
-    dy = q(2,:) - q(2,:)';
-    dz = q(3,:) - q(3,:)';
-    r2 = dx.^2 + dy.^2  +  dz.^2 + eye(n);
-
-    % calculate sigma2 - 6
-    sigma2 = (sigmaij^2)./r2;
-    sigma6 = sigma2.*sigma2.*sigma2;
-
-    %set diagonal to 0
-    sigma6(1:n+1:end) = 0;
-
-    % calculate potential energy
-    U = 4*epsij*sigma6.*(sigma6 - 1);
-
-    % sum potential energy
-    U = sum(sum(U))/2;
-
-    E = [K U];
-end

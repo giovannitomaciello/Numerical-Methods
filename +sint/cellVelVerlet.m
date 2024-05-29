@@ -31,6 +31,7 @@ function [q,p] = cellVelVerlet(dTdq,homogdTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_
 
         %Force tmp
         Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2, grd.removeIndex);
+        
         if hf
             Ftmp = Ftmp + homogdTdq(ptcls);
         end

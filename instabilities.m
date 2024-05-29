@@ -1,9 +1,9 @@
 clear all; clc; close all
 
-scale = 1;
+scale = -.5;
 
 %% parameters of the simulation
-rCut = 3;
+rCut = 6;
 L1 = 60 + 84*scale + 2*rCut;
 L2 = 60 + 2*rCut;
 L3 = 1 + 2*rCut;
@@ -76,7 +76,7 @@ inodes = setdiff(1:M,bnodes);
 phi = zeros(M,1); phi(wnodes) = 0; phi(enodes) = 0;
 
 H = 3/pi/rCut^2;
-u = @(r) H*(1-r/rCut).*(r<=rCut);
+u = @(r) H*(1-r/rCut).*(r^2<=rCut^2);
 
 %% functions to pass to the integrator
 force = @(dx, dy, dz, r2, ptcls, fc,indexPtclLocal,indexPtclAd) lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLocal,indexPtclAd, ...
@@ -93,7 +93,6 @@ tFinal = 10;
 nTime = round(tFinal/dt);
 savingStep = 100;
 [q, p] = sint.cellVelVerlet(force, forcelr, rCut^2, dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep,1);
-%[q, p] = sint.cellForest(force, rCut^2, dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep);
 
 %% plot the results
 figure
@@ -105,7 +104,7 @@ for i = 1:size(q,3)
     axis([0 L1 0 L2])
     % axis equal
     % annotate the time
-    text(0.8*L1,0.9*L2,sprintf("t = %.2f",i*tFinal/size(q,3)))
+    text(0.8*L1,65,sprintf("t = %.2f",i*tFinal/size(q,3)))
     drawnow
     frame = getframe(gcf);
     writeVideo(v,frame);
@@ -127,7 +126,7 @@ for i = 1:size(q,3)
     colormap("turbo")
     clim([0 max(p,[],"all")])
     % annotate the time
-    text(0.8*L1,0.9*L2,sprintf("t = %.2f",i*tFinal/size(q,3)))
+    text(0.8*L1,65,sprintf("t = %.2f",i*tFinal/size(q,3)))
     drawnow
     frame = getframe(gcf);
     writeVideo(v,frame);
@@ -146,7 +145,7 @@ function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLo
     sigma6 = sigma2.*sigma2.*sigma2;
 
     % calculate force
-    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2 + qiqj/epsilon.*(1./(r2.^(3/2))+ 4/rc^2 - 3*sqrt(r2)/rc^3);
+    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2 - qiqj/epsilon.*(1./(r2.^(3/2)) -4/rc^(3/2) + 3./sqrt(r2)/rc);
     Fx = Fmat.*dx;
     Fy = Fmat.*dy;
     Fz = Fmat.*dz;
@@ -172,9 +171,9 @@ function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon
     phiy = ptcls.q.*interp3(X,Y,Z,dphi_y,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
     phiz = ptcls.q.*interp3(X,Y,Z,dphi_z,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
 
-    Fx = 1/2*phix;
-    Fy = 1/2*phiy;
-    Fz = 1/2*phiz;
+    Fx =  1/2*phix;
+    Fy =  1/2*phiy;
+    Fz =  1/2*phiz;
 
     F = [Fx;Fy;Fz];
 end 
