@@ -4,20 +4,20 @@ clc; clear all; close all
 rng("default")
 clc; clear
 %% parameters of the simulation
-L1 = 60; % L of the domain
-L2 = 60; % H of the domain
-L3 = 60; % D of the domain
+L1 = 30; % L of the domain
+L2 = 30; % H of the domain
+L3 = 30; % D of the domain
 epsilon = 1;
 sigma = .5;
 rCut = 4*sigma;
 m = 10;
-dt = 0.0005;
+dt = 0.0001;
 
 %% generate two rotating circles colliding
 scale = 1;
 delta = sigma*2^(1/6);
 
-H1 = 15; W1 = 15; D1 = 15;
+H1 = 10; W1 = 10; D1 = 10;
 
 H1_l = (H1-1)*delta; W1_l = (W1-1)*delta; D1_l = (D1-1)*delta;
 
@@ -41,12 +41,12 @@ Py = -Xc*2;
 Pz = zeros(size(Zc));
 
 % copy to first circle
-X1 = Xc + 30; Y1 = Yc-5 + 30; Z1 = Zc + 30;
+X1 = Xc + 15; Y1 = Yc-2.3 + 15; Z1 = Zc + 15;
 %Px1 = Px/3; Py1 = Py/3+15; Pz1 = Pz + 0;
 Px1 = Px*0; Py1 = 0*Px; Pz1 = 0*Px;
 
 % copy to second circle
-X2 = Xc + 30; Y2 = Yc+5 + 30; Z2 = Zc + 30;
+X2 = Xc + 15; Y2 = Yc+2.3 + 15; Z2 = Zc + 15;
 %Px2 = Px/3; Py2 = Py/3-15; Pz2 = Pz + 0;
 Px2 = 0*Px; Py2 = 0*Px2; Pz2 = 0*Px2;
 
@@ -56,7 +56,7 @@ ptcls.p = [[Px1(:);Px2(:)], [Py1(:);Py2(:)], [Pz1(:);Pz2(:)]]';
 carica1 = ones(1,numel(X1));
 carica2 = -1*carica1;
 
-ptcls.q = [carica1 carica2]*2;
+ptcls.q = [carica1 carica2]*3;
 epsi = .1;
  
 
@@ -121,6 +121,9 @@ mat(remnodes,:) = [];
 A.A = mat;
 phi = 0*X;
 
+% cholencsky factorization
+A.R = chol(A.A);
+
 H = 3/pi/rCut^2;
 u = @(r) H*(1-r/rCut).*(r.^2<=rCut^2);
 
@@ -183,7 +186,7 @@ function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLo
     sigma6 = sigma2.*sigma2.*sigma2;
 
     % calculate force
-    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2 - qiqj/epsilon.*(1./(r2.^(3/2)) + 4/rc^3 - 3.*sqrt(r2)/rc^3);
+    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2 + qiqj/epsilon.*(1./(r2.^(3/2)) + 4/rc^3 - 3.*sqrt(r2)/rc^3);
     Fx = Fmat.*dx;
     Fy = Fmat.*dy;
     Fz = Fmat.*dz;
@@ -192,14 +195,11 @@ end
 function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi)
 
     rho_lr = zeros(size(X));
-    spmd
-        for k = 1:length(ptcls.q)
-            r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
-            rho_lr = rho_lr + ptcls.q(k)*u(r);
-        end
+
+    for k = 1:length(ptcls.q)
+        r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
+        rho_lr = rho_lr + ptcls.q(k)*u(r);
     end
-    
-    rho_lr = sum(rho_lr{:});
 
     RHS = rho_lr(:)/epsilon;
     RHS(remnodes) = [];
