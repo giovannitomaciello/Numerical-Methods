@@ -8,7 +8,7 @@ function [q,p] = cellVelVerlet(dTdq,homogdTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_
     %Ftmp ha dimensioni [ND,NP] e Ftmp(i,j) rappresenta la componente i sulla particella j  
     Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2, grd.removeIndex);
     if hf
-        Ftmp = Ftmp + homogdTdq(ptcls);
+        Ftmp = Ftmp - homogdTdq(ptcls);
     end
 
     t = 0;
@@ -33,7 +33,7 @@ function [q,p] = cellVelVerlet(dTdq,homogdTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_
         Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2, grd.removeIndex);
         
         if hf
-            Ftmp = Ftmp + homogdTdq(ptcls);
+            Ftmp = Ftmp - homogdTdq(ptcls);
         end
        
         %momentum

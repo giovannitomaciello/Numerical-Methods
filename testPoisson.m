@@ -14,6 +14,7 @@ epsilon = 1;
 A = fem.createPoissonMatrix(Nx, Ny, Nz, hx, hy, hz);
 f = X*0;
 f(4211) = 1;
+f(4212) = -1;
 RHS = f(:)/epsilon;
 uex = sin(X.*Y) + exp(X) .*Z;
 wnodes = fem.bnodes('w', X, Y, Z);
@@ -28,32 +29,51 @@ bnodes = union(bnodes,snodes);
 bnodes = union(bnodes,fnodes);
 bnodes = union(bnodes,bcnodes);
 inodes = setdiff(1:M,bnodes);
-u(bnodes) = 0;
+u = 0*X;
+remnodes = union(enodes,fnodes);
+remnodes = union(remnodes,nnodes);
 
-u = fem.solvePoisson(A, RHS, inodes, bnodes, u(:));
+mat = A.A;
+mat(wnodes,:) = mat(wnodes,:) + mat(enodes,:);
+mat(snodes,:) = mat(snodes,:) + mat(nnodes,:);
+mat(bcnodes,:) = mat(bcnodes,:) + mat(fnodes,:);
+
+mat(:,wnodes) = mat(:,wnodes) + mat(:,enodes);
+mat(:,snodes) = mat(:,snodes) + mat(:,nnodes);
+mat(:,bcnodes) = mat(:,bcnodes) + mat(:,fnodes);
+
+mat(:,remnodes) = [];
+
+mat(remnodes,:) = [];
+
+RHS(remnodes) = [];
+
+uu = mat\RHS;
+uu = reshape(uu,Nx-1,Ny-1,Nz-1);
+u(1:Nx-1,1:Ny-1,1:Nz-1) = uu;
+
+%u = fem.solvePoisson(A, RHS, inodes, bnodes, u(:));
 %% 
-err = norm(u(:)-uex(:),inf);
 
 %show slice
 figure
 u1_slice = reshape(u,Nx,Ny,[]);
-slice(X,Y,Z,u1_slice,[],0.5,[])
+slice(X,Y,Z,u1_slice,[0.5],0.5,[0.5])
 shading interp
 colorbar
 title('u')
 
 %show slice
-figure
-slice(X,Y,Z,uex,[],0.5,[])
-shading interp
-colorbar
-title('uex')
+% figure
+% slice(X,Y,Z,uex,[],0.5,[])
+% shading interp
+% colorbar
+% title('uex')
 
 
-%% show slice
+plot(squeeze(Z(10,10,:)),squeeze(u(10,10,:)))
 figure
-slice(X,Y,Z,u1_slice-uex,[0.2 0.5 0.8],0.5,0.5)
-shading interp
-colorbar
-title('uex')
+plot(squeeze(X(10,:,10)),squeeze(u(:,10,10)))
+figure
+plot(squeeze(Y(:,10,10)),squeeze(u(:,10,10)))
 

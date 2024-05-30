@@ -7,11 +7,11 @@ clc; clear
 L1 = 60; % L of the domain
 L2 = 60; % H of the domain
 L3 = 60; % D of the domain
-epsilon = 20;
+epsilon = 1;
 sigma = .5;
 rCut = 4*sigma;
-m = 1;
-dt = 0.00025;
+m = 10;
+dt = 0.0005;
 
 %% generate two rotating circles colliding
 scale = 1;
@@ -42,11 +42,13 @@ Pz = zeros(size(Zc));
 
 % copy to first circle
 X1 = Xc + 30; Y1 = Yc-5 + 30; Z1 = Zc + 30;
-Px1 = Px/3; Py1 = Py/3+15; Pz1 = Pz + 0;
+%Px1 = Px/3; Py1 = Py/3+15; Pz1 = Pz + 0;
+Px1 = Px*0; Py1 = 0*Px; Pz1 = 0*Px;
 
 % copy to second circle
 X2 = Xc + 30; Y2 = Yc+5 + 30; Z2 = Zc + 30;
-Px2 = Px/3; Py2 = Py/3-15; Pz2 = Pz + 0;
+%Px2 = Px/3; Py2 = Py/3-15; Pz2 = Pz + 0;
+Px2 = 0*Px; Py2 = 0*Px2; Pz2 = 0*Px2;
 
 ptcls.x = [[X1(:);X2(:)], [Y1(:);Y2(:)], [Z1(:);Z2(:)]]';
 ptcls.p = [[Px1(:);Px2(:)], [Py1(:);Py2(:)], [Pz1(:);Pz2(:)]]';
@@ -54,7 +56,7 @@ ptcls.p = [[Px1(:);Px2(:)], [Py1(:);Py2(:)], [Pz1(:);Pz2(:)]]';
 carica1 = ones(1,numel(X1));
 carica2 = -1*carica1;
 
-ptcls.q = [carica1 carica2]*.5;
+ptcls.q = [carica1 carica2]*2;
 epsi = .1;
  
 
@@ -89,12 +91,35 @@ hz = z(2) - z(1);
 
 
 A = fem.createPoissonMatrix(Nx, Ny, Nz, hx, hy, hz);
-% front and back boundary nodes
-wnodes = fem.bnodes('f', X, Y, Z);
-enodes = fem.bnodes('b', X, Y, Z);
+wnodes = fem.bnodes('w', X, Y, Z);
+enodes = fem.bnodes('e', X, Y, Z);
+nnodes = fem.bnodes('n', X, Y, Z);
+snodes = fem.bnodes('s', X, Y, Z);
+fnodes = fem.bnodes('f', X, Y, Z);
+bcnodes = fem.bnodes('b', X, Y, Z);
 bnodes = union(wnodes,enodes);
+bnodes = union(bnodes,nnodes);
+bnodes = union(bnodes,snodes);
+bnodes = union(bnodes,fnodes);
+bnodes = union(bnodes,bcnodes);
 inodes = setdiff(1:M,bnodes);
-phi = zeros(M,1); phi(wnodes) = 0; phi(enodes) = 0;
+
+remnodes = union(enodes,fnodes);
+remnodes = union(remnodes,nnodes);
+
+mat = A.A;
+mat(wnodes,:) = mat(wnodes,:) + mat(enodes,:);
+mat(snodes,:) = mat(snodes,:) + mat(nnodes,:);
+mat(bcnodes,:) = mat(bcnodes,:) + mat(fnodes,:);
+
+mat(:,wnodes) = mat(:,wnodes) + mat(:,enodes);
+mat(:,snodes) = mat(:,snodes) + mat(:,nnodes);
+mat(:,bcnodes) = mat(:,bcnodes) + mat(:,fnodes);
+
+mat(:,remnodes) = [];
+mat(remnodes,:) = [];
+A.A = mat;
+phi = 0*X;
 
 H = 3/pi/rCut^2;
 u = @(r) H*(1-r/rCut).*(r.^2<=rCut^2);
@@ -105,11 +130,11 @@ force = @(dx, dy, dz, r2, ptcls, fc,indexPtclLocal,indexPtclAd) lennardJonesForc
 boundaryConditions = @(ptcls) updateBoundaryConditions(ptcls, L1, L2, L3, rCut, rCut, rCut);
 ghost = @(ptcls, NP) updateGhost(ptcls, NP, L1, L2, L3, rCut, rCut, rCut);
 dKdp = @(p) p/m;
-forcelr=@(ptcls) force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, inodes, bnodes, phi);
+forcelr=@(ptcls) force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi);
 
 
 %% run the simulation
-savingStep = 10;
+savingStep = 50;
 [q, p] = sint.cellVelVerlet(force,forcelr, rCut^2, dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep,1);
 
 %% plot the results
@@ -158,23 +183,27 @@ function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLo
     sigma6 = sigma2.*sigma2.*sigma2;
 
     % calculate force
-    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2 - qiqj/epsilon.*(1./(r2.^(3/2)) -4/rc^(3/2) + 3./sqrt(r2)/rc);
+    Fmat = 48*epsij*sigma6.*(sigma6 - 0.5)./r2 - qiqj/epsilon.*(1./(r2.^(3/2)) + 4/rc^3 - 3.*sqrt(r2)/rc^3);
     Fx = Fmat.*dx;
     Fy = Fmat.*dy;
     Fz = Fmat.*dz;
 end
 
-function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, inodes, bnodes, phi)
+function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi)
 
     rho_lr = zeros(size(X));
-
-    for k = 1:length(ptcls.q)
-        r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
-        rho_lr = rho_lr + ptcls.q(k)*u(r);
+    spmd
+        for k = 1:length(ptcls.q)
+            r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
+            rho_lr = rho_lr + ptcls.q(k)*u(r);
+        end
     end
+    
+    rho_lr = sum(rho_lr{:});
 
     RHS = rho_lr(:)/epsilon;
-    phi = fem.solvePoisson(A, RHS, inodes, bnodes, phi);
+    RHS(remnodes) = [];
+    phi = fem.solvePoissonPeriodic(A, RHS, phi);
 
     phirec = reshape(phi,Nx,Ny,[]);
 
@@ -184,11 +213,7 @@ function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon
     phiy = ptcls.q.*interp3(X,Y,Z,dphi_y,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
     phiz = ptcls.q.*interp3(X,Y,Z,dphi_z,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
 
-    Fx =  1/2*phix;
-    Fy =  1/2*phiy;
-    Fz =  1/2*phiz;
-
-    F = [Fx;Fy;Fz];
+    F = [phix;phiy;phiz];
 end 
 function x = updateBoundaryConditions(x, L1, L2, L3, hx, hy, hz)
     if any(x(1,:) < hx) || any(x(1,:) > L1 - hx) || any(x(2,:) < hy) ...
@@ -257,7 +282,6 @@ function ptcls = updateGhost(ptcls, NP, L1, L2, L3, hx, hy, hz)
         back = find(back);
         ptcls.x = [ptcls.x, [ptcls.x(1,back); ptcls.x(2,back); ptcls.x(3,back)-L3+2*hz]];
         ptcls.q = [ptcls.q,ptcls.q(back)];
-
     end
 end
 
