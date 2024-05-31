@@ -2,6 +2,8 @@ function [q,p] = cellVelVerletPar(dTdq,homogdTdq,rCut2,dKdp,dt,nTime,grd,ptcls,g
 
     [ND, NP] = size(ptcls.x);
 
+    %ptcls = structfun(@gpuArray, ptcls, 'UniformOutput', false);
+
     q = zeros(ND,NP,nTime/savingStep);
     p = zeros(ND,NP,nTime/savingStep);
      
@@ -69,13 +71,10 @@ function [q,p] = cellVelVerletPar(dTdq,homogdTdq,rCut2,dKdp,dt,nTime,grd,ptcls,g
         spmd (prod(np))
             grd_to_ptclPar = grd_to_ptcl(IndexX{indexToSPMDX(spmdIndex)},IndexY{indexToSPMDY(spmdIndex)},IndexZ{indexToSPMDZ(spmdIndex)});
             Ftmp_spmd = - sint.forceCells(dTdq, ptcls, grd_to_ptclPar, rCut2, grd.removeIndex);
+            Ftmp = spmdPlus(Ftmp_spmd);
         end
 
-        % sum the forces
-        Ftmp = Ftmp_spmd{1}*0;
-        for j = 1:prod(np)
-            Ftmp = Ftmp + Ftmp_spmd{j};
-        end
+        Ftmp = Ftmp{1};
         
         if hf
             Ftmp = Ftmp - homogdTdq(ptcls);

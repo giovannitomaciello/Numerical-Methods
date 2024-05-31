@@ -7,7 +7,7 @@ clc; clear
 L1 = 32; % L of the domain
 L2 = 32; % H of the domain
 L3 = 32; % D of the domain
-epsilon = 1;
+epsilon = 10;
 epsi = .1;
 sigma = .5;
 rCut = 4*sigma;
@@ -208,14 +208,13 @@ function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon
             r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
             rho_lr_spmd = rho_lr_spmd + ptcls.q(k)*u(r);
         end
-    end
-    
-    for i = 1:np
-        rho_lr = rho_lr + rho_lr_spmd{i};
+        rho_lr = spmdPlus(rho_lr_spmd);
     end
 
-    RHS = rho_lr(:)/epsilon;
+    RHS = reshape(rho_lr{1},[],1)/epsilon;
+    tic
     phi = fem.solvePoissonPeriodicFFT(A, RHS);
+    toc
 
     phirec = reshape(phi,Nx,Ny,[]);
 

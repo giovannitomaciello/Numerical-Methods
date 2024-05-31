@@ -1,6 +1,8 @@
 function [q,p] = cellVelVerlet(dTdq,homogdTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,updateGhost,savingStep,hf)
 
     [ND, NP] = size(ptcls.x);
+        
+    %ptcls = structfun(@gpuArray, ptcls, 'UniformOutput', false);
 
     q = zeros(ND,NP,nTime/savingStep);
     p = zeros(ND,NP,nTime/savingStep);
