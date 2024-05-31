@@ -4,9 +4,9 @@ clc; clear all; close all
 rng("default")
 clc; clear
 %% parameters of the simulation
-L1 = 52; % L of the domain (must be div by 4)
-L2 = 52; % H of the domain (must be div by 4)
-L3 = 52; % D of the domain (must be div by 4)
+L1 = 64; % L of the domain (must be div by 4)
+L2 = 64; % H of the domain (must be div by 4)
+L3 = 64; % D of the domain (must be div by 4)
 epsilon = 1;
 sigma = .5;
 rCut = 4*sigma;
@@ -21,7 +21,7 @@ end
 scale = 1;
 delta = sigma*2^(1/6);
 
-H1 = 28; W1 = 28; D1 = 28;
+H1 = 30; W1 = 30; D1 = 30;
 
 H1_l = (H1-1)*delta; W1_l = (W1-1)*delta; D1_l = (D1-1)*delta;
 
@@ -45,12 +45,12 @@ Py = -Xc*2;
 Pz = zeros(size(Zc));
 
 % copy to first circle
-X1 = Xc + 25; Y1 = Yc-8 + 25; Z1 = Zc + 25;
+X1 = Xc + 32; Y1 = Yc-8 + 32; Z1 = Zc + 32;
 %Px1 = Px/3; Py1 = Py/3+15; Pz1 = Pz + 0;
 Px1 = Px*0; Py1 = 0*Px; Pz1 = 0*Px;
 
 % copy to second circle
-X2 = Xc + 25; Y2 = Yc+8 + 25; Z2 = Zc + 25;
+X2 = Xc + 32; Y2 = Yc+8 + 32; Z2 = Zc + 32;
 %Px2 = Px/3; Py2 = Py/3-15; Pz2 = Pz + 0;
 Px2 = 0*Px; Py2 = 0*Px2; Pz2 = 0*Px2;
 
@@ -83,7 +83,7 @@ nTime = round(tFinal/dt);
 epsilon = 1;
 
 
-Nx = grd.ncx*1.25; Ny = grd.ncy*1.25; Nz = grd.ncz*1.25;
+Nx = grd.ncx; Ny = grd.ncy; Nz = grd.ncz;
 x = linspace (0, L2, Nx);
 y = linspace (0, L1, Ny);
 z = linspace (0, L3, Nz);
@@ -217,7 +217,7 @@ function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon
         rho_lr = spmdPlus(rho_lr_spmd);
     end
 
-    RHS = rho_lr(:)/epsilon;
+    RHS = rho_lr{1}/epsilon;
     %RHS(remnodes) = [];
     %phi = fem.solvePoissonPeriodic(A, RHS, phi);
     phi = fem.solvePoissonPeriodicFFT(A, RHS);
