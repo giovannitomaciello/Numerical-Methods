@@ -209,7 +209,7 @@ function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon
     vectOfIndex = repmat(nPartInSpmd,1,np-1);
     vectOfIndex = [vectOfIndex nPartInSpmdLast];
 
-    spmd
+    spmd (np)
         for k = spmdIndex*nPartInSpmd-nPartInSpmd+1:spmdIndex*nPartInSpmd-nPartInSpmd+vectOfIndex(spmdIndex)
             r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
             rho_lr_spmd = rho_lr_spmd + ptcls.q(k)*u(r);

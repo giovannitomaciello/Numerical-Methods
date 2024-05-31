@@ -8,6 +8,7 @@ L1 = 32; % L of the domain
 L2 = 32; % H of the domain
 L3 = 32; % D of the domain
 epsilon = 1;
+epsi = .1;
 sigma = .5;
 rCut = 4*sigma;
 m = 10;
@@ -42,13 +43,13 @@ Pz = zeros(size(Zc));
 
 % copy to first circle
 X1 = Xc + 16; Y1 = Yc-2.3 + 16; Z1 = Zc + 16;
-%Px1 = Px/3; Py1 = Py/3+15; Pz1 = Pz + 0;
-Px1 = Px*0; Py1 = 0*Px; Pz1 = 0*Px;
+Px1 = Px/3; Py1 = Py/3+15; Pz1 = Pz + 0;
+%Px1 = Px*0; Py1 = 0*Px; Pz1 = 0*Px;
 
 % copy to second circle
 X2 = Xc + 16; Y2 = Yc+2.3 + 16; Z2 = Zc + 16;
-%Px2 = Px/3; Py2 = Py/3-15; Pz2 = Pz + 0;
-Px2 = 0*Px; Py2 = 0*Px2; Pz2 = 0*Px2;
+Px2 = Px/3; Py2 = Py/3-15; Pz2 = Pz + 0;
+%Px2 = 0*Px; Py2 = 0*Px2; Pz2 = 0*Px2;
 
 ptcls.x = [[X1(:);X2(:)], [Y1(:);Y2(:)], [Z1(:);Z2(:)]]';
 ptcls.p = [[Px1(:);Px2(:)], [Py1(:);Py2(:)], [Pz1(:);Pz2(:)]]';
@@ -57,8 +58,6 @@ carica1 = ones(1,numel(X1));
 carica2 = -1*carica1;
 
 ptcls.q = [carica1 carica2]*3;
-epsi = .1;
- 
 
 grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
 [nLy, nLx, nLz] = size(grd_to_ptcl);
@@ -73,9 +72,8 @@ end
 d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
 
 % number of time steps
-tFinal = 1;
+tFinal = 2;
 nTime = round(tFinal/dt);
-epsilon = 1;
 
 
 Nx = grd.ncx*2; Ny = grd.ncy*2; Nz = grd.ncz*2;
@@ -151,7 +149,7 @@ for i = 1:size(q,3)
     hold on
     scatter3(q(1,numel(X1)+1:end,i), q(2,numel(X1)+1:end,i), q(3,numel(X1)+1:end,i), 10,"blue" ,'filled')
     axis([rCut L1-rCut rCut L2-rCut rCut L3-rCut])
-    %view(0,90)
+    view(0,90)
     drawnow
     frame = getframe(gcf);
     writeVideo(v,frame);
@@ -169,7 +167,7 @@ for i = 1:size(q,3)
     scatter3(q(1,:,i), q(2,:,i),  q(3,:,i), 10,vecnorm(p(:,:,i)) ,'filled')
     hold on
     axis([rCut L1-rCut rCut L2-rCut rCut L3-rCut])
-    %view(0,0)
+    view(0,0)
     drawnow
     frame = getframe(gcf);
     writeVideo(v,frame);
@@ -205,7 +203,7 @@ function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon
     vectOfIndex = repmat(nPartInSpmd,1,np-1);
     vectOfIndex = [vectOfIndex nPartInSpmdLast];
 
-    spmd
+    spmd (np)
         for k = spmdIndex*nPartInSpmd-nPartInSpmd+1:spmdIndex*nPartInSpmd-nPartInSpmd+vectOfIndex(spmdIndex)
             r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
             rho_lr_spmd = rho_lr_spmd + ptcls.q(k)*u(r);
