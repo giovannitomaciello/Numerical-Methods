@@ -2,8 +2,6 @@ function [q,p] = cellVelVerletPar(dTdq,homogdTdq,rCut2,dKdp,dt,nTime,grd,ptcls,g
 
     [ND, NP] = size(ptcls.x);
 
-    %ptcls = structfun(@gpuArray, ptcls, 'UniformOutput', false);
-
     q = zeros(ND,NP,nTime/savingStep);
     p = zeros(ND,NP,nTime/savingStep);
      
