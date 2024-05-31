@@ -83,10 +83,10 @@ nTime = round(tFinal/dt);
 epsilon = 1;
 
 
-Nx = grd.ncx; Ny = grd.ncy; Nz = grd.ncz;
-x = linspace (-rCut, L2 + rCut, Nx)+ rCut/2;
-y = linspace (-rCut, L1 + rCut, Ny) + rCut/2;
-z = linspace (-rCut, L3 + rCut, Nz)+ rCut/2;
+Nx = grd.ncx*1.25; Ny = grd.ncy*1.25; Nz = grd.ncz*1.25;
+x = linspace (0, L2, Nx);
+y = linspace (0, L1, Ny);
+z = linspace (0, L3, Nz);
 M = Nx*Ny*Nz;
 hx = x(2) - x(1);
 hy = y(2) - y(1);
@@ -96,6 +96,7 @@ hz = z(2) - z(1);
 
 
 A = fem.createPoissonMatrix(Nx, Ny, Nz, hx, hy, hz);
+A.Lx = L1; A.Ly = L2; A.Lz = L3;
 wnodes = fem.bnodes('w', X, Y, Z);
 enodes = fem.bnodes('e', X, Y, Z);
 nnodes = fem.bnodes('n', X, Y, Z);
@@ -155,7 +156,7 @@ for i = 1:size(q,3)
     scatter3(q(1,1:numel(X1),i), q(2,1:numel(X1),i), q(3,1:numel(X1),i), 10,"red" ,'filled')
     hold on
     scatter3(q(1,numel(X1)+1:end,i), q(2,numel(X1)+1:end,i), q(3,numel(X1)+1:end,i), 10,"blue" ,'filled')
-    axis([0 L1 0 L2 0 L3])
+    axis([rCut L1-rCut rCut L2-rCut rCut L3-rCut])
     drawnow
     frame = getframe(gcf);
     writeVideo(v,frame);
@@ -172,7 +173,7 @@ open(v)
 for i = 1:size(q,3)
     scatter3(q(1,:,i), q(2,:,i),  q(3,:,i), 10,vecnorm(p(:,:,i)) ,'filled')
     hold on
-    axis([0 L1 0 L2 0 L3])
+    axis([rCut L1-rCut rCut L2-rCut rCut L3-rCut])
     drawnow
     frame = getframe(gcf);
     writeVideo(v,frame);
@@ -204,12 +205,12 @@ function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon
     rho_lr = zeros(size(X));
     rho_lr_spmd = rho_lr;
     nPartInSpmd = floor(length(ptcls.q)/np);
-    nPartInSpmdLast = mod(length(ptcls.q),np);
+    nPartInSpmdLast = length(ptcls.q) - (np-1)*nPartInSpmd;
     vectOfIndex = repmat(nPartInSpmd,1,np-1);
     vectOfIndex = [vectOfIndex nPartInSpmdLast];
 
-    spmd (np)
-        for k = spmdIndex*nPartInSpmd-nPartInSpmd+1:spmdIndex*nPartInSpmd-nPartInSpmd+1+vectOfIndex(spmdIndex)
+    spmd
+        for k = spmdIndex*nPartInSpmd-nPartInSpmd+1:spmdIndex*nPartInSpmd-nPartInSpmd+vectOfIndex(spmdIndex)
             r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
             rho_lr_spmd = rho_lr_spmd + ptcls.q(k)*u(r);
         end
@@ -220,8 +221,9 @@ function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon
     end
 
     RHS = rho_lr(:)/epsilon;
-    RHS(remnodes) = [];
-    phi = fem.solvePoissonPeriodic(A, RHS, phi);
+    %RHS(remnodes) = [];
+    %phi = fem.solvePoissonPeriodic(A, RHS, phi);
+    phi = fem.solvePoissonPeriodicFFT(A, RHS);
 
     phirec = reshape(phi,Nx,Ny,[]);
 

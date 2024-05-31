@@ -1,62 +1,65 @@
-n = 200; % Size of the grid for each dimension
+clear all
+close all
+clc
 
-tic
-% Compute eigenvalues for the 1D Laplacian
-lambda = zeros(n, 1);
-for i = 1:n
-    lambda(i) = 2 * (1 - cos(pi * i / (n + 1)));
-end
+M       = 128;              % --- Number of Fourier harmonics along x (should be a multiple of 2)  
+N       = 128;              % --- Number of Fourier harmonics along y (should be a multiple of 2)  
+P       = 128;              % --- Number of Fourier harmonics along z (should be a multiple of 2)  
+Lx      = 2;               % --- Domain size along x
+Ly      = 2;               % --- Domain size along y
+Lz      = 2;               % --- Domain size along z
+sigma   = 0.1;             % --- Characteristic width of f (make << 1)
 
-% Construct the 3D Laplacian eigenvalues
-lambda3D = bsxfun(@plus, bsxfun(@plus, lambda, permute(lambda, [2, 3, 1])), permute(lambda, [3, 1, 2]));
+% --- Wavenumbers
+kx = (2 * pi / Lx) * [0 : (M / 2 - 1) (- M / 2) : (-1)]; % --- Wavenumbers along x
+ky = (2 * pi / Ly) * [0 : (N / 2 - 1) (- N / 2) : (-1)]; % --- Wavenumbers along y
+kz = (2 * pi / Lz) * [0 : (P / 2 - 1) (- P / 2) : (-1)]; % --- Wavenumbers along z
+[Kx, Ky, Kz] = ndgrid(kx, ky, kz); 
 
-% Generate a non-random right-hand side (Gaussian distribution centered in the domain)
-% 9x9x9 domain
-[X, Y, Z] = ndgrid(linspace(1, 10, n), linspace(1, 10, n), linspace(1, 10, n));
-sigma = 1 / 5; % Standard deviation of the Gaussian
-center = 5.5; % Center of the Gaussian
-B = exp(-((X - center).^2 + (Y - center).^2 + (Z - center).^2) / (2 * sigma^2));
+% --- Right-hand side of differential equation
+hx              = Lx / M;                   % --- Grid spacing along x
+hy              = Ly / N;                   % --- Grid spacing along y
+hz              = Lz / P;                   % --- Grid spacing along z
+x               = (0 : (M - 1)) * hx;
+y               = (0 : (N - 1)) * hy;
+z               = (0 : (P - 1)) * hz;
+[X, Y, Z]       = ndgrid(x, y, z);
+rSquared        = (X - 0.5 * Lx).^2 + (Y - 0.5 * Ly).^2 + (Z - 0.5 * Lz).^2;
+sigmaSquared    = sigma^2;
+f               = exp(-rSquared / (2 * sigmaSquared)) .* (rSquared - 3 * sigmaSquared) / (sigmaSquared^2);
+fHat            = fftn(f);
 
-% Apply FFT to the right-hand side with appropriate padding and scaling
-c = -sqrt(2 / (n + 1));
-B_ext = padarray(B, [1, 1, 1], 0, 'both');
-B_prime = c^3 * imag(fft(B_ext, [], 1));
-B_prime = imag(fft(B_prime(2:n+1, :, :), [], 2));
-B_prime = imag(fft(B_prime(:, 2:n+1, :), [], 3));
-B_prime = B_prime(:, :, 2:n+1);
+% --- Denominator of the unknown spectrum
+den             = -(Kx.^2 + Ky.^2 + Kz.^2); 
+den(1, 1, 1)    = 1;            % --- Avoid division by zero at wavenumber (0, 0, 0)
 
-% Solve the diagonal system
-U_prime = B_prime ./ lambda3D;
+% --- Unknown determination
+uHat            = ifftn(fHat ./ den);
+u               = real(uHat);
+u               = u - u(1,1,1);   % --- Force arbitrary constant to be zero by forcing u(1, 1, 1) = 0
 
-% Apply inverse FFT to get back to spatial domain
-U_prime_ext = padarray(U_prime, [1, 1, 1], 0, 'both');
-U = c^3 * imag(fft(U_prime_ext, [], 1));
-U = imag(fft(U(2:n+1, :, :), [], 2));
-U = imag(fft(U(:, 2:n+1, :), [], 3));
-U = U(:, :, 2:n+1);
-toc
-% Plot a slice of the solution
-slice = U(:, :, round(n / 2));
-imagesc(slice);
-title('Slice of the solution U at the middle plane z');
-colorbar;
+% --- Plots
+uRef    = exp(-rSquared / (2 * sigmaSquared));
+err     = 100 * sqrt(sum(abs(u(:) - uRef(:)).^2) / sum(abs(uRef(:)).^2));
+errMax  = norm(u(:)-uRef(:),inf);
+fprintf('Percentage root mean square error = %f\n', err);
+fprintf('Maximum error = %f\n', errMax);
 
-% Plot a slice of the solution
+% --- Plotting the solution at a fixed z-plane (e.g., z = Lz/2)
+zPlane = round(P / 2);
+[X2D, Y2D] = meshgrid(x, y);
+surf(X2D, Y2D, squeeze(u(:,:,zPlane)))
+xlabel('x')
+ylabel('y')
+zlabel('u')
+title('Solution of 3D Poisson equation by spectral method at z = Lz/2')
+
+% --- Plotting the solution at a fixed z-plane (e.g., z = Lz/2)
 figure
-slice = squeeze(U(:, round(n / 2), :));
-imagesc(slice);
-title('Slice of the solution U at the middle plane y');
-colorbar;
-
-% Plot a slice of RHS
-slice = B(:, :, round(n / 2));
-imagesc(slice);
-title('Slice of the RHS at the middle plane z');
-colorbar;
-
-% Plot a slice of RHS
-figure
-slice = squeeze(B(:, round(n / 2), :));
-imagesc(slice);
-title('Slice of the RHS at the middle plane y');
-colorbar;
+xPlane = round(P / 2);
+[Y2D, Z2D] = meshgrid(z, y);
+surf(Y2D, Z2D, squeeze(u(:,:,xPlane)))
+xlabel('x')
+ylabel('y')
+zlabel('u')
+title('Solution of 3D Poisson equation by spectral method at x = Lz/2')

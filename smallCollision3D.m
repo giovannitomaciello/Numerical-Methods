@@ -4,9 +4,9 @@ clc; clear all; close all
 rng("default")
 clc; clear
 %% parameters of the simulation
-L1 = 30; % L of the domain
-L2 = 30; % H of the domain
-L3 = 30; % D of the domain
+L1 = 32; % L of the domain
+L2 = 32; % H of the domain
+L3 = 32; % D of the domain
 epsilon = 1;
 sigma = .5;
 rCut = 4*sigma;
@@ -41,12 +41,12 @@ Py = -Xc*2;
 Pz = zeros(size(Zc));
 
 % copy to first circle
-X1 = Xc + 15; Y1 = Yc-2.3 + 15; Z1 = Zc + 15;
+X1 = Xc + 16; Y1 = Yc-2.3 + 16; Z1 = Zc + 16;
 %Px1 = Px/3; Py1 = Py/3+15; Pz1 = Pz + 0;
 Px1 = Px*0; Py1 = 0*Px; Pz1 = 0*Px;
 
 % copy to second circle
-X2 = Xc + 15; Y2 = Yc+2.3 + 15; Z2 = Zc + 15;
+X2 = Xc + 16; Y2 = Yc+2.3 + 16; Z2 = Zc + 16;
 %Px2 = Px/3; Py2 = Py/3-15; Pz2 = Pz + 0;
 Px2 = 0*Px; Py2 = 0*Px2; Pz2 = 0*Px2;
 
@@ -78,10 +78,10 @@ nTime = round(tFinal/dt);
 epsilon = 1;
 
 
-Nx = grd.ncx; Ny = grd.ncy; Nz = grd.ncz;
-x = linspace (-rCut, L2 + rCut, Nx)+ rCut/2;
-y = linspace (-rCut, L1 + rCut, Ny) + rCut/2;
-z = linspace (-rCut, L3 + rCut, Nz)+ rCut/2;
+Nx = grd.ncx*2; Ny = grd.ncy*2; Nz = grd.ncz*2;
+x = linspace (0, L2, Nx);
+y = linspace (0, L1, Ny);
+z = linspace (0, L3, Nz);
 M = Nx*Ny*Nz;
 hx = x(2) - x(1);
 hy = y(2) - y(1);
@@ -91,6 +91,7 @@ hz = z(2) - z(1);
 
 
 A = fem.createPoissonMatrix(Nx, Ny, Nz, hx, hy, hz);
+A.Lx = L1; A.Ly = L2; A.Lz = L3;
 wnodes = fem.bnodes('w', X, Y, Z);
 enodes = fem.bnodes('e', X, Y, Z);
 nnodes = fem.bnodes('n', X, Y, Z);
@@ -149,7 +150,8 @@ for i = 1:size(q,3)
     scatter3(q(1,1:numel(X1),i), q(2,1:numel(X1),i), q(3,1:numel(X1),i), 10,"red" ,'filled')
     hold on
     scatter3(q(1,numel(X1)+1:end,i), q(2,numel(X1)+1:end,i), q(3,numel(X1)+1:end,i), 10,"blue" ,'filled')
-    axis([0 L1 0 L2 0 L3])
+    axis([rCut L1-rCut rCut L2-rCut rCut L3-rCut])
+    %view(0,90)
     drawnow
     frame = getframe(gcf);
     writeVideo(v,frame);
@@ -166,7 +168,8 @@ open(v)
 for i = 1:size(q,3)
     scatter3(q(1,:,i), q(2,:,i),  q(3,:,i), 10,vecnorm(p(:,:,i)) ,'filled')
     hold on
-    axis([0 L1 0 L2 0 L3])
+    axis([rCut L1-rCut rCut L2-rCut rCut L3-rCut])
+    %view(0,0)
     drawnow
     frame = getframe(gcf);
     writeVideo(v,frame);
@@ -194,16 +197,27 @@ end
 
 function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi)
 
+    np = 2;
     rho_lr = zeros(size(X));
+    rho_lr_spmd = rho_lr;
+    nPartInSpmd = floor(length(ptcls.q)/np);
+    nPartInSpmdLast = length(ptcls.q) - (np-1)*nPartInSpmd;
+    vectOfIndex = repmat(nPartInSpmd,1,np-1);
+    vectOfIndex = [vectOfIndex nPartInSpmdLast];
 
-    for k = 1:length(ptcls.q)
-        r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
-        rho_lr = rho_lr + ptcls.q(k)*u(r);
+    spmd
+        for k = spmdIndex*nPartInSpmd-nPartInSpmd+1:spmdIndex*nPartInSpmd-nPartInSpmd+vectOfIndex(spmdIndex)
+            r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
+            rho_lr_spmd = rho_lr_spmd + ptcls.q(k)*u(r);
+        end
+    end
+    
+    for i = 1:np
+        rho_lr = rho_lr + rho_lr_spmd{i};
     end
 
     RHS = rho_lr(:)/epsilon;
-    RHS(remnodes) = [];
-    phi = fem.solvePoissonPeriodic(A, RHS, phi);
+    phi = fem.solvePoissonPeriodicFFT(A, RHS);
 
     phirec = reshape(phi,Nx,Ny,[]);
 
