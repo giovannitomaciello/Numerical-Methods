@@ -7,11 +7,13 @@ clc; clear
 L1 = 64; % L of the domain (must be div by 4)
 L2 = 64; % H of the domain (must be div by 4)
 L3 = 64; % D of the domain (must be div by 4)
-epsilon = 1;
+charge = 5; % mod
+epsilon = 10;
+epsi = .1;
 sigma = .5;
 rCut = 4*sigma;
 m = 10;
-dt = 0.0001;
+dt = 0.00025;
 np = [2,2,2];
 if isempty(gcp('nocreate'))
     parpool(prod(np));
@@ -60,9 +62,7 @@ ptcls.p = [[Px1(:);Px2(:)], [Py1(:);Py2(:)], [Pz1(:);Pz2(:)]]';
 carica1 = ones(1,numel(X1));
 carica2 = -1*carica1;
 
-ptcls.q = [carica1 carica2]*5;
-epsi = .1;
- 
+ptcls.q = [carica1 carica2]*charge;
 
 grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
 [nLy, nLx, nLz] = size(grd_to_ptcl);
@@ -80,8 +80,6 @@ d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
 % number of time steps
 tFinal = 1;
 nTime = round(tFinal/dt);
-epsilon = 1;
-
 
 Nx = grd.ncx; Ny = grd.ncy; Nz = grd.ncz;
 x = linspace (0, L2, Nx);
@@ -226,9 +224,9 @@ function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon
 
     [dphi_x, dphi_y, dphi_z] = gradient(phirec, hx, hy, hz);
 
-    phix = ptcls.q.*interp3(X,Y,Z,dphi_x,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
-    phiy = ptcls.q.*interp3(X,Y,Z,dphi_y,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
-    phiz = ptcls.q.*interp3(X,Y,Z,dphi_z,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
+    phix = ptcls.q.*interp3(X,Y,Z,dphi_x,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"linear");
+    phiy = ptcls.q.*interp3(X,Y,Z,dphi_y,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"linear");
+    phiz = ptcls.q.*interp3(X,Y,Z,dphi_z,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"linear");
 
     F = [phix;phiy;phiz];
 end 

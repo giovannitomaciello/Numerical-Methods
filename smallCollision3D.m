@@ -12,7 +12,7 @@ epsi = .1;
 sigma = .5;
 rCut = 4*sigma;
 m = 10;
-dt = 0.0001;
+dt = 0.00025;
 
 %% generate two rotating circles colliding
 scale = 1;
@@ -43,13 +43,13 @@ Pz = zeros(size(Zc));
 
 % copy to first circle
 X1 = Xc + 16; Y1 = Yc-2.3 + 16; Z1 = Zc + 16;
-Px1 = Px/3; Py1 = Py/3+15; Pz1 = Pz + 0;
-%Px1 = Px*0; Py1 = 0*Px; Pz1 = 0*Px;
+%Px1 = Px/3; Py1 = Py/3+15; Pz1 = Pz + 0;
+Px1 = Px*0; Py1 = 0*Px; Pz1 = 0*Px;
 
 % copy to second circle
 X2 = Xc + 16; Y2 = Yc+2.3 + 16; Z2 = Zc + 16;
-Px2 = Px/3; Py2 = Py/3-15; Pz2 = Pz + 0;
-%Px2 = 0*Px; Py2 = 0*Px2; Pz2 = 0*Px2;
+%Px2 = Px/3; Py2 = Py/3-15; Pz2 = Pz + 0;
+Px2 = 0*Px; Py2 = 0*Px2; Pz2 = 0*Px2;
 
 ptcls.x = [[X1(:);X2(:)], [Y1(:);Y2(:)], [Z1(:);Z2(:)]]';
 ptcls.p = [[Px1(:);Px2(:)], [Py1(:);Py2(:)], [Pz1(:);Pz2(:)]]';
@@ -120,9 +120,6 @@ mat(remnodes,:) = [];
 A.A = mat;
 phi = 0*X;
 
-% cholencsky factorization
-A.R = chol(A.A);
-
 H = 3/pi/rCut^2;
 u = @(r) H*(1-r/rCut).*(r.^2<=rCut^2);
 
@@ -159,6 +156,7 @@ end
 close(v)
 
 %% plot the results p
+set(0,'DefaultFigureColor',[1 1 1]);
 figure
 % save the video
 v = VideoWriter('smallCollp3D.avi');
@@ -195,34 +193,26 @@ end
 
 function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi)
 
-    np = 2;
-    rho_lr = zeros(size(X));
-    rho_lr_spmd = rho_lr;
-    nPartInSpmd = floor(length(ptcls.q)/np);
-    nPartInSpmdLast = length(ptcls.q) - (np-1)*nPartInSpmd;
-    vectOfIndex = repmat(nPartInSpmd,1,np-1);
-    vectOfIndex = [vectOfIndex nPartInSpmdLast];
-
-    spmd (np)
-        for k = spmdIndex*nPartInSpmd-nPartInSpmd+1:spmdIndex*nPartInSpmd-nPartInSpmd+vectOfIndex(spmdIndex)
-            r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
-            rho_lr_spmd = rho_lr_spmd + ptcls.q(k)*u(r);
-        end
-        rho_lr = spmdPlus(rho_lr_spmd);
-    end
-
-    RHS = reshape(rho_lr{1},[],1)/epsilon;
+    %rho_lr = X*0;
+    %tic
+    %for k = 1:length(ptcls.q)
+    %         r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
+    %         rho_lr = rho_lr + ptcls.q(k)*u(r);
+    %end
     tic
-    phi = fem.solvePoissonPeriodicFFT(A, RHS);
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, ptcls.q, ptcls.x);
     toc
+
+    RHS = reshape(rho_lr,[],1)/epsilon;
+    phi = fem.solvePoissonPeriodicFFT(A, RHS);
 
     phirec = reshape(phi,Nx,Ny,[]);
 
     [dphi_x, dphi_y, dphi_z] = gradient(phirec, hx, hy, hz);
 
-    phix = ptcls.q.*interp3(X,Y,Z,dphi_x,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
-    phiy = ptcls.q.*interp3(X,Y,Z,dphi_y,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
-    phiz = ptcls.q.*interp3(X,Y,Z,dphi_z,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"nearest");
+    phix = ptcls.q.*interp3(X,Y,Z,dphi_x,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"linear");
+    phiy = ptcls.q.*interp3(X,Y,Z,dphi_y,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"linear");
+    phiz = ptcls.q.*interp3(X,Y,Z,dphi_z,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"linear");
 
     F = [phix;phiy;phiz];
 end 
