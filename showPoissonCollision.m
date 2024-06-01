@@ -6,6 +6,7 @@ gunzip poissonCollisionData\p.mat.gz
 load("./poissonCollisionData/p.mat")
 load("./poissonCollisionData/q.mat")
 load("./poissonCollisionData/c.mat")
+%%
 img = imread("./poissonCollisionData/theEnd.png");
 % convert to grey scale
 img = rgb2gray(img);
@@ -14,31 +15,75 @@ img = double(img);
 % flip the image
 imgTE = flipud(img);
 
-% interpolate latest time of the simulation from the image
+img = imread("./poissonCollisionData/ThisIs.png");
+% convert to grey scale
+img = rgb2gray(img);
+% convert to double
+img = double(img);
+% flip the image
+imgTI = flipud(img);
+
+% interpolate latest time of the simulation from the image 1
 qLatest = q(:,:,end);
 x = linspace(0,64,size(imgTE,2));
 y = linspace(0,64,size(imgTE,1));
 [X,Y] = meshgrid(y,x);
-qLatestInterp = interp2(X,Y,imgTE,q(1,:,end),q(2,:,end));
+qLatestInterp1 = interp2(X,Y,imgTE,q(1,:,end),q(2,:,end));
+
+% interpolate latest time of the simulation from the image 2
+x = linspace(0,64,size(imgTI,2));
+y = linspace(0,64,size(imgTI,1));
+[X,Y] = meshgrid(y,x);
+qLatestInterp2 = interp2(X,Y,imgTI,q(1,:,end),q(3,:,end));
+
+qLatestInterp = sqrt(abs(qLatestInterp2 + qLatestInterp1));
+qLatestInterp(qLatestInterp>mean(qLatestInterp)) = mean(qLatestInterp);
 
 %% plot the simulation and save video for the end
 figure
 v = VideoWriter('poissonCollisionTheEnd.avi');
 open(v)
-for i = 1:1:size(q,3)
-    scatter(q(1,:,i),q(2,:,i),3,qLatestInterp,'filled')
+for i = 1:size(q,3)
+    scatter3(q(1,:,i),q(2,:,i),q(3,:,i),20,qLatestInterp,'filled','MarkerFaceAlpha',.2,'MarkerEdgeAlpha',.2)
     title("Initial Random Value?")
     xlabel("x")
     ylabel("y")
+    zlabel("z")
+    view(0,90)
     axis equal
     colormap("prism")
     % cut the image to the size of the simulation
     xlim([0 64])
     ylim([0 64])
+    zlim([0 64])
     drawnow
     frame = getframe(gcf);
     writeVideo(v,frame);
 end
+close(v)
+
+%% plot the simulation and save video for the end
+figure
+v = VideoWriter('poissonCollisionThisIs.avi');
+open(v)
+for i = 1:size(q,3)
+    scatter3(q(1,:,i),q(2,:,i),q(3,:,i),20,qLatestInterp,'filled','MarkerFaceAlpha',.2,'MarkerEdgeAlpha',.2)
+    title("Initial Random Value?")
+    xlabel("x")
+    ylabel("y")
+    zlabel("z")
+    view(0,0)
+    axis equal
+    colormap("prism")
+    % cut the image to the size of the simulation
+    xlim([0 64])
+    ylim([0 64])
+    zlim([0 64])
+    drawnow
+    frame = getframe(gcf);
+    writeVideo(v,frame);
+end
+close(v)
 close(v)
 
 %% plot the simulation and save video for the charge for x and y
@@ -46,7 +91,7 @@ figure
 v = VideoWriter('poissonCollisionChargeXY.avi');
 open(v)
 for i = 1:1:size(q,3)
-    scatter(q(1,:,i),q(2,:,i),3,c,'filled')
+    scatter(q(1,:,i),q(2,:,i),1.5,c,'filled')
     title("Charge Distribution XY Plane")
     xlabel("x")
     ylabel("y")
@@ -67,7 +112,7 @@ figure
 v = VideoWriter('poissonCollisionChargeXZ.avi');
 open(v)
 for i = 1:1:size(q,3)
-    scatter(q(1,:,i),q(3,:,i),3,c,'filled')
+    scatter(q(1,:,i),q(3,:,i),1.5,c,'filled')
     title("Charge Distribution XZ Plane")
     xlabel("x")
     ylabel("z")
@@ -88,7 +133,7 @@ figure
 v = VideoWriter('poissonCollisionChargeYZ.avi');
 open(v)
 for i = 1:1:size(q,3)
-    scatter(q(2,:,i),q(3,:,i),3,c,'filled')
+    scatter(q(2,:,i),q(3,:,i),1.5,c,'filled')
     title("Charge Distribution YZ Plane")
     xlabel("y")
     ylabel("z")
@@ -109,7 +154,7 @@ figure
 v = VideoWriter('poissonCollisionMomentumXY.avi');
 open(v)
 for i = 1:1:size(q,3)
-    scatter(q(1,:,i),q(2,:,i),3,vecnorm(p(:,:,i)),'filled')
+    scatter(q(1,:,i),q(2,:,i),1.5,vecnorm(p(:,:,i)),'filled')
     title("Momentum Distribution XY Plane")
     xlabel("x")
     ylabel("y")
@@ -130,7 +175,7 @@ figure
 v = VideoWriter('poissonCollisionMomentumXZ.avi');
 open(v)
 for i = 1:1:size(q,3)
-    scatter(q(1,:,i),q(3,:,i),3,vecnorm(p(:,:,i)),'filled')
+    scatter(q(1,:,i),q(3,:,i),1.5,vecnorm(p(:,:,i)),'filled')
     title("Momentum Distribution XZ Plane")
     xlabel("x")
     ylabel("z")
@@ -151,7 +196,7 @@ figure
 v = VideoWriter('poissonCollisionMomentumYZ.avi');
 open(v)
 for i = 1:1:size(q,3)
-    scatter(q(2,:,i),q(3,:,i),3,vecnorm(p(:,:,i)),'filled')
+    scatter(q(2,:,i),q(3,:,i),1.5,vecnorm(p(:,:,i)),'filled')
     title("Momentum Distribution YZ Plane")
     xlabel("y")
     ylabel("z")

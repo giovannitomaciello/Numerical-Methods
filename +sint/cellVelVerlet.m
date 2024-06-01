@@ -4,8 +4,8 @@ function [q,p] = cellVelVerlet(dTdq,homogdTdq,rCut2,dKdp,dt,nTime,grd,ptcls,grd_
         
     %ptcls = structfun(@gpuArray, ptcls, 'UniformOutput', false);
 
-    q = zeros(ND,NP,nTime/savingStep);
-    p = zeros(ND,NP,nTime/savingStep);
+    q = zeros(ND,NP,floor(nTime/savingStep));
+    p = zeros(ND,NP,floor(nTime/savingStep));
      
     %Ftmp ha dimensioni [ND,NP] e Ftmp(i,j) rappresenta la componente i sulla particella j  
     Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2, grd.removeIndex);

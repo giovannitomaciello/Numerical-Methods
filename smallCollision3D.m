@@ -7,12 +7,19 @@ clc; clear
 L1 = 32; % L of the domain
 L2 = 32; % H of the domain
 L3 = 32; % D of the domain
-epsilon = 10;
+epsilon = 5;
+charge = 5;
 epsi = .1;
 sigma = .5;
 rCut = 4*sigma;
-m = 10;
-dt = 0.00025;
+m = 20;
+dt = 0.0008;
+noise = 0.00005;
+savingStep = 10;
+
+% number of time steps
+tFinal = 2;
+nTime = round(tFinal/dt);
 
 %% generate two rotating circles colliding
 scale = 1;
@@ -52,12 +59,13 @@ X2 = Xc + 16; Y2 = Yc+2.3 + 16; Z2 = Zc + 16;
 Px2 = 0*Px; Py2 = 0*Px2; Pz2 = 0*Px2;
 
 ptcls.x = [[X1(:);X2(:)], [Y1(:);Y2(:)], [Z1(:);Z2(:)]]';
+ptcls.x = ptcls.x + noise*randn(size(ptcls.x));
 ptcls.p = [[Px1(:);Px2(:)], [Py1(:);Py2(:)], [Pz1(:);Pz2(:)]]';
 
 carica1 = ones(1,numel(X1));
 carica2 = -1*carica1;
 
-ptcls.q = [carica1 carica2]*3;
+ptcls.q = [carica1 carica2]*charge;
 
 grd_to_ptcl = sint.init_ptcl_mesh (grd, ptcls);
 [nLy, nLx, nLz] = size(grd_to_ptcl);
@@ -70,10 +78,6 @@ for i = 1:nLz
 end
 
 d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
-
-% number of time steps
-tFinal = 2;
-nTime = round(tFinal/dt);
 
 
 Nx = grd.ncx*2; Ny = grd.ncy*2; Nz = grd.ncz*2;
@@ -129,11 +133,10 @@ force = @(dx, dy, dz, r2, ptcls, fc,indexPtclLocal,indexPtclAd) lennardJonesForc
 boundaryConditions = @(ptcls) updateBoundaryConditions(ptcls, L1, L2, L3, rCut, rCut, rCut);
 ghost = @(ptcls, NP) updateGhost(ptcls, NP, L1, L2, L3, rCut, rCut, rCut);
 dKdp = @(p) p/m;
-forcelr=@(ptcls) force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi);
+forcelr=@(ptcls) force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi, rCut);
 
 
 %% run the simulation
-savingStep = 50;
 [q, p] = sint.cellVelVerlet(force,forcelr, rCut^2, dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep,1);
 
 %% plot the results
@@ -142,11 +145,11 @@ figure
 v = VideoWriter('smallCollq3D.avi');
 open(v)
 for i = 1:size(q,3)
-    scatter3(q(1,1:numel(X1),i), q(2,1:numel(X1),i), q(3,1:numel(X1),i), 10,"red" ,'filled')
-    hold on
-    scatter3(q(1,numel(X1)+1:end,i), q(2,numel(X1)+1:end,i), q(3,numel(X1)+1:end,i), 10,"blue" ,'filled')
+    scatter3(q(1,:,i), q(2,:,i),  q(3,:,i), 10,ptcls.q,'filled')
+    colorbar
+    colormap(winter(2))
+    axis equal
     axis([rCut L1-rCut rCut L2-rCut rCut L3-rCut])
-    view(0,90)
     drawnow
     frame = getframe(gcf);
     writeVideo(v,frame);
@@ -156,16 +159,16 @@ end
 close(v)
 
 %% plot the results p
-set(0,'DefaultFigureColor',[1 1 1]);
 figure
 % save the video
 v = VideoWriter('smallCollp3D.avi');
 open(v)
 for i = 1:size(q,3)
     scatter3(q(1,:,i), q(2,:,i),  q(3,:,i), 10,vecnorm(p(:,:,i)) ,'filled')
-    hold on
+    colorbar
+    clim([0 max(vecnorm(p),[],"all")])
+    axis equal
     axis([rCut L1-rCut rCut L2-rCut rCut L3-rCut])
-    view(0,0)
     drawnow
     frame = getframe(gcf);
     writeVideo(v,frame);
@@ -191,10 +194,10 @@ function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLo
     Fz = Fmat.*dz;
 end
 
-function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi)
+function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi, rCut)
 
     % higly optimized with eigen3
-    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, ptcls.q, ptcls.x);
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, ptcls.q, ptcls.x, rCut);
 
     RHS = reshape(rho_lr,[],1)/epsilon;
     phi = fem.solvePoissonPeriodicFFT(A, RHS);

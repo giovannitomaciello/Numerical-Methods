@@ -7,14 +7,22 @@ clc; clear
 L1 = 64; % L of the domain (must be div by 4)
 L2 = 64; % H of the domain (must be div by 4)
 L3 = 64; % D of the domain (must be div by 4)
-charge = 5; % mod
-epsilon = 10;
+epsilon = 5;
+charge = 5;
 epsi = .1;
 sigma = .5;
 rCut = 4*sigma;
-m = 10;
-dt = 0.00025;
+m = 20;
+dt = 0.0008;
+noise = 0.00005;
+savingStep = 10;
+% x y z divisions 2x2x2 = 8 proc
 np = [2,2,2];
+
+% number of time steps
+tFinal = 2;
+nTime = round(tFinal/dt);
+
 if isempty(gcp('nocreate'))
     parpool(prod(np));
 end
@@ -23,7 +31,7 @@ end
 scale = 1;
 delta = sigma*2^(1/6);
 
-H1 = 30; W1 = 30; D1 = 30;
+H1 = 37; W1 = 37; D1 = 37;
 
 H1_l = (H1-1)*delta; W1_l = (W1-1)*delta; D1_l = (D1-1)*delta;
 
@@ -47,16 +55,17 @@ Py = -Xc*2;
 Pz = zeros(size(Zc));
 
 % copy to first circle
-X1 = Xc + 32; Y1 = Yc-8 + 32; Z1 = Zc + 32;
+X1 = Xc + 32; Y1 = Yc-10.5 + 32; Z1 = Zc + 32;
 %Px1 = Px/3; Py1 = Py/3+15; Pz1 = Pz + 0;
 Px1 = Px*0; Py1 = 0*Px; Pz1 = 0*Px;
 
 % copy to second circle
-X2 = Xc + 32; Y2 = Yc+8 + 32; Z2 = Zc + 32;
+X2 = Xc + 32; Y2 = Yc+10.5 + 32; Z2 = Zc + 32;
 %Px2 = Px/3; Py2 = Py/3-15; Pz2 = Pz + 0;
 Px2 = 0*Px; Py2 = 0*Px2; Pz2 = 0*Px2;
 
 ptcls.x = [[X1(:);X2(:)], [Y1(:);Y2(:)], [Z1(:);Z2(:)]]';
+ptcls.x = ptcls.x + noise*randn(size(ptcls.x));
 ptcls.p = [[Px1(:);Px2(:)], [Py1(:);Py2(:)], [Pz1(:);Pz2(:)]]';
 
 carica1 = ones(1,numel(X1));
@@ -76,10 +85,6 @@ for i = 1:nLz
 end
 
 d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
-
-% number of time steps
-tFinal = 1;
-nTime = round(tFinal/dt);
 
 Nx = grd.ncx; Ny = grd.ncy; Nz = grd.ncz;
 x = linspace (0, L2, Nx);
@@ -135,11 +140,10 @@ force = @(dx, dy, dz, r2, ptcls, fc,indexPtclLocal,indexPtclAd) lennardJonesForc
 boundaryConditions = @(ptcls) updateBoundaryConditions(ptcls, L1, L2, L3, rCut, rCut, rCut);
 ghost = @(ptcls, NP) updateGhost(ptcls, NP, L1, L2, L3, rCut, rCut, rCut);
 dKdp = @(p) p/m;
-forcelr=@(ptcls) force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi, np);
+forcelr=@(ptcls) force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi, np, rCut);
 
 
 %% run the simulation
-savingStep = 40;
 [q, p] = sint.cellVelVerletPar(force,forcelr, rCut^2, dKdp,dt,nTime,grd,ptcls,grd_to_ptcl,boundaryConditions,ghost,savingStep,1,np);
 
 %% plot the results
@@ -148,9 +152,10 @@ figure
 v = VideoWriter('smallCollq3D.avi');
 open(v)
 for i = 1:size(q,3)
-    scatter3(q(1,1:numel(X1),i), q(2,1:numel(X1),i), q(3,1:numel(X1),i), 10,"red" ,'filled')
-    hold on
-    scatter3(q(1,numel(X1)+1:end,i), q(2,numel(X1)+1:end,i), q(3,numel(X1)+1:end,i), 10,"blue" ,'filled')
+    scatter3(q(1,:,i), q(2,:,i),  q(3,:,i), 10,ptcls.q,'filled')
+    colorbar
+    colormap(winter(2))
+    axis equal
     axis([rCut L1-rCut rCut L2-rCut rCut L3-rCut])
     drawnow
     frame = getframe(gcf);
@@ -167,7 +172,9 @@ v = VideoWriter('smallCollp3D.avi');
 open(v)
 for i = 1:size(q,3)
     scatter3(q(1,:,i), q(2,:,i),  q(3,:,i), 10,vecnorm(p(:,:,i)) ,'filled')
-    hold on
+    colorbar
+    clim([0 max(vecnorm(p),[],"all")])
+    axis equal
     axis([rCut L1-rCut rCut L2-rCut rCut L3-rCut])
     drawnow
     frame = getframe(gcf);
@@ -194,10 +201,10 @@ function [Fx, Fy, Fz] = lennardJonesForce(dx, dy, dz, r2, ptcls, fc, indexPtclLo
     Fz = Fmat.*dz;
 end
 
-function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi ,np)
+function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi ,np, rCut)
 
     % higly optimized with eigen3
-    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, ptcls.q, ptcls.x);
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, ptcls.q, ptcls.x, rCut);
 
     RHS = reshape(rho_lr,[],1)/epsilon;
     %RHS(remnodes) = [];

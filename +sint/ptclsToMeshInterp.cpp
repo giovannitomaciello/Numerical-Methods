@@ -7,8 +7,8 @@ using namespace Eigen;
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     // Check for proper number of arguments.
-    if (nrhs != 5) {
-        mexErrMsgIdAndTxt("MATLAB:rho_lr_mex:invalidNumInputs", "Five input arguments required.");
+    if (nrhs != 6) {
+        mexErrMsgIdAndTxt("MATLAB:rho_lr_mex:invalidNumInputs", "Six input arguments required.");
     }
     if (nlhs > 1) {
         mexErrMsgIdAndTxt("MATLAB:rho_lr_mex:maxlhs", "Too many output arguments.");
@@ -20,6 +20,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     double *Z = mxGetPr(prhs[2]);
     double *q = mxGetPr(prhs[3]);
     double *ptcls_x = mxGetPr(prhs[4]);
+    double rCut = mxGetScalar(prhs[5]); // Extract rCut from input arguments
 
     // Get dimensions
     mwSize numPoints = mxGetNumberOfElements(prhs[0]);
@@ -34,7 +35,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     double *rho_lr = mxGetPr(plhs[0]);
 
     // Constants
-    double rCut = 1.0; // Assuming rCut is predefined or passed as an argument
     double rCutSq = rCut * rCut;
     double H = 3.0 / (M_PI * rCutSq);
 
