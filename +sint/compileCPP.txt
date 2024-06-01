@@ -1,1 +1,1 @@
-mex ./ptclsToMeshInterp.cpp -I"C:\Users\andrea_windows\Downloads\eigen-3.4.0\Eigen" COMPFLAGS="/openmp $COMPFLAGS" LINKFLAGS="/openmp $LINKFLAGS"
+mex ./ptclsToMeshInterp.cpp -I"path/to/eigen" COMPFLAGS="/openmp $COMPFLAGS" LINKFLAGS="/openmp $LINKFLAGS"
