@@ -124,9 +124,6 @@ mat(:,remnodes) = [];
 mat(remnodes,:) = [];
 A.A = mat;
 
-% cholencsky factorization
-A.R = chol(A.A);
-
 phi = 0*X;
 
 H = 3/pi/rCut^2;
@@ -199,23 +196,10 @@ end
 
 function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi ,np)
 
-    np = prod(np);
-    rho_lr = zeros(size(X));
-    rho_lr_spmd = rho_lr;
-    nPartInSpmd = floor(length(ptcls.q)/np);
-    nPartInSpmdLast = length(ptcls.q) - (np-1)*nPartInSpmd;
-    vectOfIndex = repmat(nPartInSpmd,1,np-1);
-    vectOfIndex = [vectOfIndex nPartInSpmdLast];
+    % higly optimized with eigen3
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, ptcls.q, ptcls.x);
 
-    spmd (np)
-        for k = spmdIndex*nPartInSpmd-nPartInSpmd+1:spmdIndex*nPartInSpmd-nPartInSpmd+vectOfIndex(spmdIndex)
-            r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
-            rho_lr_spmd = rho_lr_spmd + ptcls.q(k)*u(r);
-        end
-        rho_lr = spmdPlus(rho_lr_spmd);
-    end
-
-    RHS = rho_lr{1}/epsilon;
+    RHS = reshape(rho_lr,[],1)/epsilon;
     %RHS(remnodes) = [];
     %phi = fem.solvePoissonPeriodic(A, RHS, phi);
     phi = fem.solvePoissonPeriodicFFT(A, RHS);

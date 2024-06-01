@@ -5,10 +5,6 @@
 
 using namespace Eigen;
 
-inline double u(double r, double rCut, double H) {
-    return H * (1 - r / rCut) * (r <= rCut);
-}
-
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     // Check for proper number of arguments.
     if (nrhs != 5) {
@@ -52,7 +48,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     Map<ArrayXd> q_map(q, numPtcls);
     Map<MatrixXd> ptcls_x_map(ptcls_x, 3, numPtcls);
 
-    // Compute rho_lr using Eigen and OpenMP
+    // Compute rho_lr using Eigen
     #pragma omp parallel for
     for (mwSize i = 0; i < numPoints; ++i) {
         double xi = X_map(i);
@@ -68,7 +64,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
             if (rSq <= rCutSq) {
                 double r = std::sqrt(rSq);
                 #pragma omp atomic
-                rho_lr[i] += q_map(k) * u(r, rCut, H);
+                rho_lr[i] += q_map(k) * H * (1 - r / rCut);
             }
         }
     }

@@ -193,15 +193,8 @@ end
 
 function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi)
 
-    %rho_lr = X*0;
-    %tic
-    %for k = 1:length(ptcls.q)
-    %         r = sqrt((X - ptcls.x(1, k)).^2 + (Y - ptcls.x(2, k)).^2 + (Z - ptcls.x(3, k)).^2);
-    %         rho_lr = rho_lr + ptcls.q(k)*u(r);
-    %end
-    tic
+    % higly optimized with eigen3
     rho_lr = sint.ptclsToMeshInterp(X, Y, Z, ptcls.q, ptcls.x);
-    toc
 
     RHS = reshape(rho_lr,[],1)/epsilon;
     phi = fem.solvePoissonPeriodicFFT(A, RHS);
