@@ -55,6 +55,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
         double yi = Y_map(i);
         double zi = Z_map(i);
 
+        #pragma omp parallel for
         for (mwSize k = 0; k < numPtcls; ++k) {
             double dx = xi - ptcls_x_map(0, k);
             double dy = yi - ptcls_x_map(1, k);

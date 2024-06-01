@@ -204,7 +204,9 @@ end
 function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi ,np, rCut)
 
     % higly optimized with eigen3
+    tic
     rho_lr = sint.ptclsToMeshInterp(X, Y, Z, ptcls.q, ptcls.x, rCut);
+    toc
 
     RHS = reshape(rho_lr,[],1)/epsilon;
     %RHS(remnodes) = [];
