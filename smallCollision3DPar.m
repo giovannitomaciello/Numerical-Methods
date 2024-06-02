@@ -31,7 +31,7 @@ end
 scale = 1;
 delta = sigma*2^(1/6);
 
-H1 = 37; W1 = 37; D1 = 37;
+H1 = 52; W1 = 52; D1 = 52;
 
 H1_l = (H1-1)*delta; W1_l = (W1-1)*delta; D1_l = (D1-1)*delta;
 
@@ -55,12 +55,12 @@ Py = -Xc*2;
 Pz = zeros(size(Zc));
 
 % copy to first circle
-X1 = Xc + 32; Y1 = Yc-10.5 + 32; Z1 = Zc + 32;
+X1 = Xc + 32; Y1 = Yc-14 + 32; Z1 = Zc + 32;
 %Px1 = Px/3; Py1 = Py/3+15; Pz1 = Pz + 0;
 Px1 = Px*0; Py1 = 0*Px; Pz1 = 0*Px;
 
 % copy to second circle
-X2 = Xc + 32; Y2 = Yc+10.5 + 32; Z2 = Zc + 32;
+X2 = Xc + 32; Y2 = Yc+14 + 32; Z2 = Zc + 32;
 %Px2 = Px/3; Py2 = Py/3-15; Pz2 = Pz + 0;
 Px2 = 0*Px; Py2 = 0*Px2; Pz2 = 0*Px2;
 
@@ -86,7 +86,7 @@ end
 
 d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
 
-Nx = grd.ncx; Ny = grd.ncy; Nz = grd.ncz;
+Nx = grd.ncx*2.5; Ny = grd.ncy*2.5; Nz = grd.ncz*2.5;
 x = linspace (0, L2, Nx);
 y = linspace (0, L1, Ny);
 z = linspace (0, L3, Nz);
@@ -203,10 +203,8 @@ end
 
 function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi ,np, rCut)
 
-    % higly optimized with eigen3
-    tic
+    % higly optimized with eigen3, hashing and IntelTBB
     rho_lr = sint.ptclsToMeshInterp(X, Y, Z, ptcls.q, ptcls.x, rCut);
-    toc
 
     RHS = reshape(rho_lr,[],1)/epsilon;
     %RHS(remnodes) = [];

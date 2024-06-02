@@ -1,1 +1,3 @@
-mex ./ptclsToMeshInterp.cpp -I"path/to/eigen" COMPFLAGS="/openmp $COMPFLAGS" LINKFLAGS="/openmp $LINKFLAGS"
+win: mex ./ptclsToMeshInterp.cpp -I"path/to/eigen" -I"/path/to/tbb" -largeArrayDims -ltbb
+
+linux: mex -I/usr/include/eigen3 -largeArrayDims ptclsToMeshInterp.cpp -I/usr/include/tbb -ltbb
