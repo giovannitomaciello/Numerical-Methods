@@ -203,8 +203,10 @@ end
 
 function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi ,np, rCut)
 
-    % higly optimized with eigen3, hashing and IntelTBB
+    % higly optimized with eigen3, hashing and IntelTBB for linux and
+    % OpenMP for windows (much better performance on linux 10x approx with TBB)
     rho_lr = sint.ptclsToMeshInterp(X, Y, Z, ptcls.q, ptcls.x, rCut);
+
 
     RHS = reshape(rho_lr,[],1)/epsilon;
     %RHS(remnodes) = [];
