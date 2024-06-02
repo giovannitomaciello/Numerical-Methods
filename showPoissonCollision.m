@@ -212,5 +212,196 @@ for i = 1:1:size(q,3)
 end
 close(v)
 
+%% plot the mesh of the simulation
+x = linspace(0,64,64);
+y = linspace(0,64,64);
+z = linspace(0,64,64);
+[X,Y,Z] = meshgrid(x,y,z);
+figure
+v = VideoWriter('poissonCollisionMeshXYcharge.avi');
+open(v)
+A.Nx = 64; A.Ny = 64; A.Nz = 64;
+A.Lx = 64; A.Ly = 64; A.Lz = 64;
+rCut = 2; epsilon = .1;
+for i = 1:1:size(q,3)
+    % calculate charge density
+    % higly optimized with eigen3, hashing and IntelTBB
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, q(:,:,i), c, rCut);
+    RHS = reshape(rho_lr,[],1)/epsilon;
+    phi = fem.solvePoissonPeriodicFFT(A, RHS);
+    phi = reshape(phi, size(X));
+    % plot surface
+    surf(X(:,:,32),Y(:,:,32),phi(:,:,32))
+    title("Charge Density XY Plane")
+    xlabel("x")
+    ylabel("y")
+    zlabel("Charge Density")
+    axis equal
+    colormap("winter")
+    colorbar
+    % cut the image to the size of the simulation
+    xlim([0 64])
+    ylim([0 64])
+end
+close(v)
+
+%% plot the mesh of the simulation
+x = linspace(0,64,64);
+y = linspace(0,64,64);
+z = linspace(0,64,64);
+[X,Y,Z] = meshgrid(x,y,z);
+figure
+v = VideoWriter('poissonCollisionMeshXZcharge.avi');
+open(v)
+A.Nx = 64; A.Ny = 64; A.Nz = 64;
+A.Lx = 64; A.Ly = 64; A.Lz = 64;
+rCut = 2; epsilon = .1;
+for i = 1:1:size(q,3)
+    % calculate charge density
+    % higly optimized with eigen3, hashing and IntelTBB
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, q(:,:,i), c, rCut);
+    RHS = reshape(rho_lr,[],1)/epsilon;
+    phi = fem.solvePoissonPeriodicFFT(A, RHS);
+    phi = reshape(phi, size(X));
+    % plot surface
+    surf(X(:,:,32),Z(:,:,32),phi(:,:,32))
+    title("Charge Density XZ Plane")
+    xlabel("x")
+    ylabel("z")
+    zlabel("Charge Density")
+    axis equal
+    colormap("winter")
+    colorbar
+    % cut the image to the size of the simulation
+    xlim([0 64])
+    ylim([0 64])
+end
+close(v)
+
+%% plot the mesh of the simulation
+x = linspace(0,64,64);
+y = linspace(0,64,64);
+z = linspace(0,64,64);
+[X,Y,Z] = meshgrid(x,y,z);
+figure
+v = VideoWriter('poissonCollisionMeshYZcharge.avi');
+open(v)
+A.Nx = 64; A.Ny = 64; A.Nz = 64;
+A.Lx = 64; A.Ly = 64; A.Lz = 64;
+rCut = 2; epsilon = .1;
+for i = 1:1:size(q,3)
+    % calculate charge density
+    % higly optimized with eigen3, hashing and IntelTBB
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, q(:,:,i), c, rCut);
+    RHS = reshape(rho_lr,[],1)/epsilon;
+    phi = fem.solvePoissonPeriodicFFT(A, RHS);
+    phi = reshape(phi, size(X));
+    % plot surface
+    surf(Y(:,:,32),Z(:,:,32),phi(:,:,32))
+    title("Charge Density YZ Plane")
+    xlabel("y")
+    ylabel("z")
+    zlabel("Charge Density")
+    axis equal
+    colormap("winter")
+    colorbar
+    % cut the image to the size of the simulation
+    xlim([0 64])
+    ylim([0 64])
+end
+close(v)
+
+%% plot the mesh of the simulation for rho_lr
+x = linspace(0,64,64);
+y = linspace(0,64,64);
+z = linspace(0,64,64);
+[X,Y,Z] = meshgrid(x,y,z);
+figure
+v = VideoWriter('poissonCollisionMeshXYrho_lr.avi');
+open(v)
+A.Nx = 64; A.Ny = 64; A.Nz = 64;
+A.Lx = 64; A.Ly = 64; A.Lz = 64;
+rCut = 2; epsilon = .1;
+for i = 1:1:size(q,3)
+    % calculate charge density
+    % higly optimized with eigen3, hashing and IntelTBB
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, q(:,:,i), c, rCut);
+    % plot surface
+    surf(X(:,:,32),Y(:,:,32),rho_lr(:,:,32))
+    title("Charge Density XY Plane")
+    xlabel("x")
+    ylabel("y")
+    zlabel("Charge Density")
+    axis equal
+    colormap("winter")
+    colorbar
+    % cut the image to the size of the simulation
+    xlim([0 64])
+    ylim([0 64])
+end
+close(v)
+
+%% plot the mesh of the simulation for rho_lr
+x = linspace(0,64,64);
+y = linspace(0,64,64);
+z = linspace(0,64,64);
+[X,Y,Z] = meshgrid(x,y,z);
+figure
+v = VideoWriter('poissonCollisionMeshXZrho_lr.avi');
+open(v)
+A.Nx = 64; A.Ny = 64; A.Nz = 64;
+A.Lx = 64; A.Ly = 64; A.Lz = 64;
+rCut = 2; epsilon = .1;
+for i = 1:1:size(q,3)
+    % calculate charge density
+    % higly optimized with eigen3, hashing and IntelTBB
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, q(:,:,i), c, rCut);
+    % plot surface
+    surf(X(:,:,32),Z(:,:,32),rho_lr(:,:,32))
+    title("Charge Density XZ Plane")
+    xlabel("x")
+    ylabel("z")
+    zlabel("Charge Density")
+    axis equal
+    colormap("winter")
+    colorbar
+    % cut the image to the size of the simulation
+    xlim([0 64])
+    ylim([0 64])
+end
+close(v)
+
+%% plot the mesh of the simulation for rho_lr
+x = linspace(0,64,64);
+y = linspace(0,64,64);
+z = linspace(0,64,64);
+[X,Y,Z] = meshgrid(x,y,z);
+figure
+v = VideoWriter('poissonCollisionMeshYZrho_lr.avi');
+open(v)
+A.Nx = 64; A.Ny = 64; A.Nz = 64;
+A.Lx = 64; A.Ly = 64; A.Lz = 64;
+rCut = 2; epsilon = .1;
+for i = 1:1:size(q,3)
+    % calculate charge density
+    % higly optimized with eigen3, hashing and IntelTBB
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, q(:,:,i), c, rCut);
+    % plot surface
+    surf(Y(:,:,32),Z(:,:,32),rho_lr(:,:,32))
+    title("Charge Density YZ Plane")
+    xlabel("y")
+    ylabel("z")
+    zlabel("Charge Density")
+    axis equal
+    colormap("winter")
+    colorbar
+    % cut the image to the size of the simulation
+    xlim([0 64])
+    ylim([0 64])
+end
+close(v)
+
+
+
 
 

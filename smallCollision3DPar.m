@@ -12,10 +12,10 @@ charge = 5;
 epsi = .1;
 sigma = .5;
 rCut = 4*sigma;
-m = 20;
-dt = 0.0008;
+m = 23;
+dt = 0.00075;
 noise = 0.00005;
-savingStep = 10;
+savingStep = 12;
 % x y z divisions 2x2x2 = 8 proc
 np = [2,2,2];
 
@@ -86,7 +86,7 @@ end
 
 d = cellfun (@numel, grd_to_ptcl, 'UniformOutput', true);
 
-Nx = grd.ncx*2.5; Ny = grd.ncy*2.5; Nz = grd.ncz*2.5;
+Nx = grd.ncx*1.5; Ny = grd.ncy*1.5; Nz = grd.ncz*1.5;
 x = linspace (0, L2, Nx);
 y = linspace (0, L1, Ny);
 z = linspace (0, L3, Nz);
@@ -203,8 +203,7 @@ end
 
 function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon, u, A, remnodes, phi ,np, rCut)
 
-    % higly optimized with eigen3, hashing and IntelTBB for linux and
-    % OpenMP for windows (much better performance on linux 10x approx with TBB)
+    % higly optimized with eigen3, hashing and IntelTBB
     rho_lr = sint.ptclsToMeshInterp(X, Y, Z, ptcls.q, ptcls.x, rCut);
 
 

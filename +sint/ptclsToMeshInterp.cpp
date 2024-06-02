@@ -110,7 +110,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     double maxX = X_map.maxCoeff();
     double maxY = Y_map.maxCoeff();
     double maxZ = Z_map.maxCoeff();
-    double gridSpacing = rCut;
+    double gridSpacing = (Y_map(1) - Y_map(0)); // Assuming uniform spacing
     double invGridSpacing = 1.0 / gridSpacing;
 
     // Create a grid to hold particles
@@ -122,16 +122,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
         grid[index].push_back(p);
     }
 
-    // Precompute all the possible grid indices for neighbor searching
+    // Precompute all the possible grid indices for neighbor searching within cutoff radius
     std::vector<GridIndex> neighborOffsets;
-    for (int dx = -1; dx <= 1; ++dx) {
-        for (int dy = -1; dy <= 1; ++dy) {
-            for (int dz = -1; dz <= 1; ++dz) {
-                neighborOffsets.push_back({dx, dy, dz});
+    int maxOffset = std::ceil(rCut / gridSpacing);
+    for (int dx = -maxOffset; dx <= maxOffset; ++dx) {
+        for (int dy = -maxOffset; dy <= maxOffset; ++dy) {
+            for (int dz = -maxOffset; dz <= maxOffset; ++dz) {
+                double distance = std::sqrt(dx*dx + dy*dy + dz*dz) * gridSpacing;
+                if (distance <= rCut) {
+                    neighborOffsets.push_back({dx, dy, dz});
+                }
             }
         }
     }
-
 
     // Compute rho_lr using the precomputed grid in parallel
     tbb::parallel_for(tbb::blocked_range<size_t>(0, numPoints), [&](const tbb::blocked_range<size_t>& r) {
