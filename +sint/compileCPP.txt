@@ -1,7 +1,5 @@
-openMP parallelization
-win$:  mex -v -largeArrayDims -I"...\eigen-3.4.0\Eigen" ptclsToMeshInterpWin.cpp
+openMP parallelization (easy rewrite)
+win$:  mex ptclsToMeshInterp.cpp -I"C:...\eigen-3.4.0\Eigen" COMPFLAGS="/openmp $COMPFLAGS" LINKFLAGS="/openmp $LINKFLAGS"
 
 intelTBB parallelization (MUCH FASTER 10x on 128x128x128mesh with 500k particles)
 linux$: mex -I/usr/include/eigen3 -largeArrayDims ptclsToMeshInterpLinux.cpp -I/usr/include/tbb -ltbb
-
-then remove the linux or win naming after the compiling from the .mex
