@@ -1,11 +1,11 @@
 clc; clear all; close all;
 set(0,'DefaultFigureColor',[1 1 1]);
-gunzip poissonCollisionData\c.mat.gz
-gunzip poissonCollisionData\q.mat.gz
-gunzip poissonCollisionData\p.mat.gz
-load("./poissonCollisionData/p.mat")
-load("./poissonCollisionData/q.mat")
-load("./poissonCollisionData/c.mat")
+%gunzip poissonCollisionData\c.mat.gz
+%gunzip poissonCollisionData\q.mat.gz
+%gunzip poissonCollisionData\p.mat.gz
+load("./poissonCollisionData/coordLarge/p.mat")
+load("./poissonCollisionData/coordLarge/c.mat")
+load("./poissonCollisionData/coordLarge/q.mat")
 %%
 img = imread("./poissonCollisionData/theEnd.png");
 % convert to grey scale
@@ -212,7 +212,109 @@ for i = 1:1:size(q,3)
 end
 close(v)
 
-%% plot the mesh of the simulation
+%% plot the mesh of the simulation for phi
+x = linspace(0,64,64);
+y = linspace(0,64,64);
+z = linspace(0,64,64);
+[X,Y,Z] = meshgrid(x,y,z);
+figure
+v = VideoWriter('poissonCollisionMeshXYphi.avi');
+open(v)
+A.Nx = 64; A.Ny = 64; A.Nz = 64;
+A.Lx = 64; A.Ly = 64; A.Lz = 64;
+rCut = 2; epsilon = .1;
+for i = 1:size(q,3)
+    % calculate charge density
+    % higly optimized with eigen3, hashing and IntelTBB
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, c, q(:,:,i), rCut);
+    RHS = reshape(rho_lr,[],1)/epsilon;
+    phi = fem.solvePoissonPeriodicFFT(A, RHS);
+    phi = reshape(phi, size(X));
+    % plot surface
+    imagesc(phi(:,:,32))
+    colormap("parula")
+    colorbar
+    title("phi XY Plane")
+    xlabel("x")
+    ylabel("y")
+    axis equal
+    shading interp
+    %cut the image to the size of the simulation
+    drawnow
+    frame = getframe(gcf);
+    writeVideo(v,frame);
+end
+close(v)
+
+%% plot the mesh of the simulation for phi
+x = linspace(0,64,64);
+y = linspace(0,64,64);
+z = linspace(0,64,64);
+[X,Y,Z] = meshgrid(x,y,z);
+figure
+v = VideoWriter('poissonCollisionMeshXZphi.avi');
+open(v)
+A.Nx = 64; A.Ny = 64; A.Nz = 64;
+A.Lx = 64; A.Ly = 64; A.Lz = 64;
+rCut = 2; epsilon = .1;
+for i = 1:1:size(q,3)
+    % calculate charge density
+    % higly optimized with eigen3, hashing and IntelTBB
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, c, q(:,:,i), rCut);
+    RHS = reshape(rho_lr,[],1)/epsilon;
+    phi = fem.solvePoissonPeriodicFFT(A, RHS);
+    phi = reshape(phi, size(X));
+    % plot surface
+    imagesc(squeeze(phi(:,32,:)))
+    title("phi XZ Plane")
+    xlabel("x")
+    ylabel("z")
+    axis equal
+    colormap("parula")
+    colorbar
+    shading interp
+    % cut the image to the size of the simulation
+    drawnow
+    frame = getframe(gcf);
+    writeVideo(v,frame);
+end
+close(v)
+
+%% plot the mesh of the simulation for phi
+x = linspace(0,64,64);
+y = linspace(0,64,64);
+z = linspace(0,64,64);
+[X,Y,Z] = meshgrid(x,y,z);
+figure
+v = VideoWriter('poissonCollisionMeshYZphi.avi');
+open(v)
+A.Nx = 64; A.Ny = 64; A.Nz = 64;
+A.Lx = 64; A.Ly = 64; A.Lz = 64;
+rCut = 2; epsilon = .1;
+for i = 1:1:size(q,3)
+    % calculate charge density
+    % higly optimized with eigen3, hashing and IntelTBB
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, c, q(:,:,i), rCut);
+    RHS = reshape(rho_lr,[],1)/epsilon;
+    phi = fem.solvePoissonPeriodicFFT(A, RHS);
+    phi = reshape(phi, size(X));
+    % plot surface
+    imagesc(squeeze(phi(32,:,:)))
+    title("phi YZ Plane")
+    xlabel("y")
+    ylabel("z")
+    axis equal
+    colormap("parula")
+    colorbar
+    shading interp
+    % cut the image to the size of the simulation
+    drawnow
+    frame = getframe(gcf);
+    writeVideo(v,frame);
+end
+close(v)
+
+%% plot the mesh of the simulation for rho
 x = linspace(0,64,64);
 y = linspace(0,64,64);
 z = linspace(0,64,64);
@@ -226,26 +328,25 @@ rCut = 2; epsilon = .1;
 for i = 1:1:size(q,3)
     % calculate charge density
     % higly optimized with eigen3, hashing and IntelTBB
-    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, q(:,:,i), c, rCut);
-    RHS = reshape(rho_lr,[],1)/epsilon;
-    phi = fem.solvePoissonPeriodicFFT(A, RHS);
-    phi = reshape(phi, size(X));
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, c, q(:,:,i), rCut);
+    rho_lr = reshape(rho_lr,64,64,64);
     % plot surface
-    surf(X(:,:,32),Y(:,:,32),phi(:,:,32))
-    title("Charge Density XY Plane")
+    imagesc(rho_lr(:,:,32))
+    title("rho XY Plane")
     xlabel("x")
     ylabel("y")
-    zlabel("Charge Density")
     axis equal
-    colormap("winter")
+    colormap("jet") % Change colormap to jet
     colorbar
+    shading interp
     % cut the image to the size of the simulation
-    xlim([0 64])
-    ylim([0 64])
+    drawnow
+    frame = getframe(gcf);
+    writeVideo(v,frame);
 end
 close(v)
 
-%% plot the mesh of the simulation
+%% plot the mesh of the simulation for rho
 x = linspace(0,64,64);
 y = linspace(0,64,64);
 z = linspace(0,64,64);
@@ -259,26 +360,25 @@ rCut = 2; epsilon = .1;
 for i = 1:1:size(q,3)
     % calculate charge density
     % higly optimized with eigen3, hashing and IntelTBB
-    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, q(:,:,i), c, rCut);
-    RHS = reshape(rho_lr,[],1)/epsilon;
-    phi = fem.solvePoissonPeriodicFFT(A, RHS);
-    phi = reshape(phi, size(X));
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, c, q(:,:,i), rCut);
+    rho_lr = reshape(rho_lr,64,64,64);
     % plot surface
-    surf(X(:,:,32),Z(:,:,32),phi(:,:,32))
-    title("Charge Density XZ Plane")
+    imagesc(squeeze(rho_lr(:,32,:)))
+    title("rho XZ Plane")
     xlabel("x")
     ylabel("z")
-    zlabel("Charge Density")
     axis equal
-    colormap("winter")
+    colormap("jet") % Change colormap to jet
     colorbar
+    shading interp
     % cut the image to the size of the simulation
-    xlim([0 64])
-    ylim([0 64])
+    drawnow
+    frame = getframe(gcf);
+    writeVideo(v,frame);
 end
 close(v)
 
-%% plot the mesh of the simulation
+%% plot the mesh of the simulation for rho
 x = linspace(0,64,64);
 y = linspace(0,64,64);
 z = linspace(0,64,64);
@@ -292,116 +392,20 @@ rCut = 2; epsilon = .1;
 for i = 1:1:size(q,3)
     % calculate charge density
     % higly optimized with eigen3, hashing and IntelTBB
-    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, q(:,:,i), c, rCut);
-    RHS = reshape(rho_lr,[],1)/epsilon;
-    phi = fem.solvePoissonPeriodicFFT(A, RHS);
-    phi = reshape(phi, size(X));
+    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, c, q(:,:,i), rCut);
+    rho_lr = reshape(rho_lr,64,64,64);
     % plot surface
-    surf(Y(:,:,32),Z(:,:,32),phi(:,:,32))
-    title("Charge Density YZ Plane")
+    imagesc(squeeze(rho_lr(32,:,:)))
+    title("rho YZ Plane")
     xlabel("y")
     ylabel("z")
-    zlabel("Charge Density")
     axis equal
-    colormap("winter")
+    colormap("jet") % Change colormap to jet
     colorbar
+    shading interp
     % cut the image to the size of the simulation
-    xlim([0 64])
-    ylim([0 64])
+    drawnow
+    frame = getframe(gcf);
+    writeVideo(v,frame);
 end
 close(v)
-
-%% plot the mesh of the simulation for rho_lr
-x = linspace(0,64,64);
-y = linspace(0,64,64);
-z = linspace(0,64,64);
-[X,Y,Z] = meshgrid(x,y,z);
-figure
-v = VideoWriter('poissonCollisionMeshXYrho_lr.avi');
-open(v)
-A.Nx = 64; A.Ny = 64; A.Nz = 64;
-A.Lx = 64; A.Ly = 64; A.Lz = 64;
-rCut = 2; epsilon = .1;
-for i = 1:1:size(q,3)
-    % calculate charge density
-    % higly optimized with eigen3, hashing and IntelTBB
-    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, q(:,:,i), c, rCut);
-    % plot surface
-    surf(X(:,:,32),Y(:,:,32),rho_lr(:,:,32))
-    title("Charge Density XY Plane")
-    xlabel("x")
-    ylabel("y")
-    zlabel("Charge Density")
-    axis equal
-    colormap("winter")
-    colorbar
-    % cut the image to the size of the simulation
-    xlim([0 64])
-    ylim([0 64])
-end
-close(v)
-
-%% plot the mesh of the simulation for rho_lr
-x = linspace(0,64,64);
-y = linspace(0,64,64);
-z = linspace(0,64,64);
-[X,Y,Z] = meshgrid(x,y,z);
-figure
-v = VideoWriter('poissonCollisionMeshXZrho_lr.avi');
-open(v)
-A.Nx = 64; A.Ny = 64; A.Nz = 64;
-A.Lx = 64; A.Ly = 64; A.Lz = 64;
-rCut = 2; epsilon = .1;
-for i = 1:1:size(q,3)
-    % calculate charge density
-    % higly optimized with eigen3, hashing and IntelTBB
-    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, q(:,:,i), c, rCut);
-    % plot surface
-    surf(X(:,:,32),Z(:,:,32),rho_lr(:,:,32))
-    title("Charge Density XZ Plane")
-    xlabel("x")
-    ylabel("z")
-    zlabel("Charge Density")
-    axis equal
-    colormap("winter")
-    colorbar
-    % cut the image to the size of the simulation
-    xlim([0 64])
-    ylim([0 64])
-end
-close(v)
-
-%% plot the mesh of the simulation for rho_lr
-x = linspace(0,64,64);
-y = linspace(0,64,64);
-z = linspace(0,64,64);
-[X,Y,Z] = meshgrid(x,y,z);
-figure
-v = VideoWriter('poissonCollisionMeshYZrho_lr.avi');
-open(v)
-A.Nx = 64; A.Ny = 64; A.Nz = 64;
-A.Lx = 64; A.Ly = 64; A.Lz = 64;
-rCut = 2; epsilon = .1;
-for i = 1:1:size(q,3)
-    % calculate charge density
-    % higly optimized with eigen3, hashing and IntelTBB
-    rho_lr = sint.ptclsToMeshInterp(X, Y, Z, q(:,:,i), c, rCut);
-    % plot surface
-    surf(Y(:,:,32),Z(:,:,32),rho_lr(:,:,32))
-    title("Charge Density YZ Plane")
-    xlabel("y")
-    ylabel("z")
-    zlabel("Charge Density")
-    axis equal
-    colormap("winter")
-    colorbar
-    % cut the image to the size of the simulation
-    xlim([0 64])
-    ylim([0 64])
-end
-close(v)
-
-
-
-
-
