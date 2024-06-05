@@ -214,11 +214,14 @@ function F = force_long_range(ptcls, X ,Y, Z, Nx, Ny, Nz, hx, hy, hz, M, epsilon
 
     phirec = reshape(phi,Nx,Ny,[]);
 
-    [dphi_x, dphi_y, dphi_z] = gradient(phirec, hx, hy, hz);
+    [dphi_x, dphi_y, dphi_z] = fem.grad(phirec, hx, hy, hz);
 
-    phix = ptcls.q.*interp3(X,Y,Z,dphi_x,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"linear");
-    phiy = ptcls.q.*interp3(X,Y,Z,dphi_y,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"linear");
-    phiz = ptcls.q.*interp3(X,Y,Z,dphi_z,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"linear");
+    phix = ptcls.q.*sint.Interp3ptcls(X(1:end-1,:,:) + hx/2,Y(1:end-1,:,:),Z(1:end-1,:,:),...
+        dphi_x,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"x");
+    phiy = ptcls.q.*sint.Interp3ptcls(X(:,1:end-1,:),Y(:,1:end-1,:) + hy/2,Z(:,1:end-1,:),...
+        dphi_y,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"y");
+    phiz = ptcls.q.*sint.Interp3ptcls(X(:,:,1:end-1),Y(:,:,1:end-1),Z(:,:,1:end-1) + hz/2,...
+        dphi_z,ptcls.x(1,:),ptcls.x(2,:),ptcls.x(3,:),"z");
 
     F = [phix;phiy;phiz];
 end 

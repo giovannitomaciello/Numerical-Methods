@@ -4,12 +4,6 @@ function [q,p] = cellVelVerletPar(dTdq,homogdTdq,rCut2,dKdp,dt,nTime,grd,ptcls,g
 
     q = zeros(ND,NP,floor(nTime/savingStep));
     p = zeros(ND,NP,floor(nTime/savingStep));
-     
-    %Ftmp ha dimensioni [ND,NP] e Ftmp(i,j) rappresenta la componente i sulla particella j  
-    Ftmp = - sint.forceCells(dTdq, ptcls, grd_to_ptcl, rCut2, grd.removeIndex);
-    if hf
-        Ftmp = Ftmp - homogdTdq(ptcls);
-    end
 
     [nLy, nLx, nLz] = size(grd_to_ptcl);
 
@@ -48,6 +42,19 @@ function [q,p] = cellVelVerletPar(dTdq,homogdTdq,rCut2,dKdp,dt,nTime,grd,ptcls,g
     [indexToSPMDX, indexToSPMDY, indexToSPMDZ] = ind2sub(np,1:prod(np));
 
     t = 0;
+
+    %Force tmp
+    spmd (prod(np))
+        grd_to_ptclPar = grd_to_ptcl(IndexX{indexToSPMDX(spmdIndex)},IndexY{indexToSPMDY(spmdIndex)},IndexZ{indexToSPMDZ(spmdIndex)});
+        Ftmp_spmd = - sint.forceCells(dTdq, ptcls, grd_to_ptclPar, rCut2, grd.removeIndex);
+        Ftmp = spmdPlus(Ftmp_spmd);
+    end
+
+    Ftmp = Ftmp{1};
+    
+    if hf
+        Ftmp = Ftmp - homogdTdq(ptcls);
+    end
 
     for i = 2:nTime
         %momentum tmp
