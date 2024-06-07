@@ -10,7 +10,7 @@
 
 <h4 align="right">Andrea Somma, Giovanni Tomaciello, Paolo Zagardo</h4> 
 
-## Group Assignment 1 
+<!--- ## Group Assignment 1 
 <div>
     <h3>Mathematical simulators of a double elastic pendulum and a frozen Argon crystal in MATLAB</h3> <h5 align="right">March 2024</h5>
 </div>
@@ -134,3 +134,5 @@ https://github.com/giovannitomaciello/Numerical-Methods/assets/120776791/9a92152
     ![nick20](https://github.com/giovannitomaciello/Numerical-Methods/assets/120776791/1a4d9169-1772-441c-9f56-90cc630d9f28)
 
   </div>
+
+  --->
