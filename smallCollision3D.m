@@ -8,17 +8,17 @@ L1 = 32; % L of the domain
 L2 = 32; % H of the domain
 L3 = 32; % D of the domain
 epsilon = 5;
-charge = 5;
+charge = .5;
 epsi = .1;
 sigma = .5;
 rCut = 4*sigma;
 m = 20;
 dt = 0.0008;
 noise = 0.00005;
-savingStep = 10;
+savingStep = 50;
 
 % number of time steps
-tFinal = 2;
+tFinal = 10;
 nTime = round(tFinal/dt);
 
 %% generate two rotating circles colliding
@@ -148,6 +148,7 @@ for i = 1:size(q,3)
     scatter3(q(1,:,i), q(2,:,i),  q(3,:,i), 10,ptcls.q,'filled')
     colorbar
     colormap(winter(2))
+    view(0,90)
     axis equal
     axis([rCut L1-rCut rCut L2-rCut rCut L3-rCut])
     drawnow
